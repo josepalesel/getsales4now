@@ -15,6 +15,13 @@
       "when": 1774804929078,
       "tag": "0001_motionless_the_leader",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774807062395,
+      "tag": "0002_tan_blackheart",
+      "breakpoints": true
     }
   ]
 }

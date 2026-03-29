@@ -126,3 +126,19 @@
 - [x] Vitest tests for campaign procedures
 - [x] Vitest tests for AI copilot procedures
 - [x] Vitest tests for auth flow
+
+## Admin Panel
+- [x] DB schema: app_settings table (key/value global config)
+- [x] DB schema: audit_logs table (action, userId, resource, details, timestamp)
+- [x] tRPC adminRouter: listUsers, updateUserRole, suspendUser, deleteUser
+- [x] tRPC adminRouter: getSettings, updateSetting, listAuditLogs
+- [x] tRPC adminRouter: getSystemStats (total users, active sessions, DB size, etc.)
+- [x] Admin route guard (adminProcedure middleware)
+- [x] Admin Panel page /admin with sidebar sub-navigation
+- [x] Users tab: table with search, role badge, status, actions (promote/suspend/delete)
+- [x] Permissions tab: role matrix showing what each role can access
+- [x] App Settings tab: global config (app name, default language, maintenance mode, feature flags)
+- [x] Audit Log tab: searchable log of all admin/system actions
+- [x] System Health tab: server stats, DB status, integration health
+- [x] Admin access guard on frontend (redirect non-admins)
+- [x] Vitest tests for admin procedures

@@ -303,3 +303,30 @@ export const auditLogs = mysqlTable("audit_logs", {
 });
 
 export type AuditLog = typeof auditLogs.$inferSelect;
+
+// ─── APP SETTINGS ─────────────────────────────────────────────────────────────
+export const appSettings = mysqlTable("app_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 128 }).notNull().unique(),
+  value: text("value"),
+  type: mysqlEnum("type", ["string", "boolean", "number", "json"]).default("string").notNull(),
+  label: varchar("label", { length: 200 }),
+  description: text("description"),
+  category: varchar("category", { length: 64 }).default("general"),
+  updatedBy: int("updatedBy"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AppSetting = typeof appSettings.$inferSelect;
+export type InsertAppSetting = typeof appSettings.$inferInsert;
+
+// ─── USER SESSIONS (for admin monitoring) ─────────────────────────────────────
+export const userSessions = mysqlTable("user_sessions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  ipAddress: varchar("ipAddress", { length: 45 }),
+  userAgent: text("userAgent"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastActiveAt: timestamp("lastActiveAt").defaultNow().notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+});
+export type UserSession = typeof userSessions.$inferSelect;

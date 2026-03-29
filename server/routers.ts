@@ -19,8 +19,12 @@ import {
   agentActions,
   integrations,
   templates,
+  appSettings,
+  auditLogs,
+  userSessions,
 } from "../drizzle/schema";
-import { eq, desc, and, like, or } from "drizzle-orm";
+import { TRPCError } from "@trpc/server";
+import { eq, desc, and, like, or, sql, count } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 
 // ─── AUTH ROUTER ──────────────────────────────────────────────────────────────
@@ -726,6 +730,240 @@ const integrationsRouter = router({
     }),
 });
 
+// ─── ADMIN ROUTER ────────────────────────────────────────────────────────────
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return next({ ctx });
+});
+
+const adminRouter = router({
+  // ── Users management ──
+  listUsers: adminProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      role: z.enum(["user", "admin", "all"]).default("all"),
+      page: z.number().default(1),
+      limit: z.number().default(20),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return { users: [], total: 0 };
+      let query = db.select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        role: users.role,
+        businessType: users.businessType,
+        businessName: users.businessName,
+        uiLanguage: users.uiLanguage,
+        country: users.country,
+        onboardingCompleted: users.onboardingCompleted,
+        createdAt: users.createdAt,
+        lastSignedIn: users.lastSignedIn,
+      }).from(users).$dynamic();
+      if (input.search) {
+        query = query.where(or(
+          like(users.name, `%${input.search}%`),
+          like(users.email, `%${input.search}%`),
+        ));
+      }
+      if (input.role !== "all") {
+        query = query.where(eq(users.role, input.role as "user" | "admin"));
+      }
+      const result = await query.orderBy(desc(users.createdAt)).limit(input.limit).offset((input.page - 1) * input.limit);
+      return { users: result, total: result.length };
+    }),
+
+  getUserDetail: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      const [user] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!user) throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
+      const contactCount = await db.select({ id: contacts.id }).from(contacts).where(eq(contacts.userId, input.userId));
+      const campaignCount = await db.select({ id: campaigns.id }).from(campaigns).where(eq(campaigns.userId, input.userId));
+      const sessions = await db.select().from(userSessions).where(eq(userSessions.userId, input.userId)).orderBy(desc(userSessions.lastActiveAt)).limit(5);
+      return { user, contactCount: contactCount.length, campaignCount: campaignCount.length, sessions };
+    }),
+
+  updateUserRole: adminProcedure
+    .input(z.object({ userId: z.number(), role: z.enum(["user", "admin"]) }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
+      await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: `Updated user role to ${input.role}`,
+        entity: "user",
+        entityId: input.userId,
+        details: { role: input.role },
+      });
+      return { success: true };
+    }),
+
+  deleteUser: adminProcedure
+    .input(z.object({ userId: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      if (input.userId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot delete your own account" });
+      await db.delete(users).where(eq(users.id, input.userId));
+      await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: "Deleted user account",
+        entity: "user",
+        entityId: input.userId,
+        details: {},
+      });
+      return { success: true };
+    }),
+
+  // ── App Settings ──
+  listSettings: adminProcedure
+    .input(z.object({ category: z.string().optional() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      if (input.category) {
+        return db.select().from(appSettings).where(eq(appSettings.category, input.category)).orderBy(appSettings.key);
+      }
+      return db.select().from(appSettings).orderBy(appSettings.category, appSettings.key);
+    }),
+
+  updateSetting: adminProcedure
+    .input(z.object({ key: z.string(), value: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      await db.update(appSettings)
+        .set({ value: input.value, updatedBy: ctx.user.id })
+        .where(eq(appSettings.key, input.key));
+      await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: `Updated setting: ${input.key}`,
+        entity: "app_setting",
+        details: { key: input.key, value: input.value },
+      });
+      return { success: true };
+    }),
+
+  // ── Audit Logs ──
+  listAuditLogs: adminProcedure
+    .input(z.object({
+      search: z.string().optional(),
+      userId: z.number().optional(),
+      entity: z.string().optional(),
+      limit: z.number().default(50),
+      page: z.number().default(1),
+    }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) return [];
+      return db.select({
+        id: auditLogs.id,
+        userId: auditLogs.userId,
+        action: auditLogs.action,
+        entity: auditLogs.entity,
+        entityId: auditLogs.entityId,
+        details: auditLogs.details,
+        ipAddress: auditLogs.ipAddress,
+        createdAt: auditLogs.createdAt,
+        userName: users.name,
+        userEmail: users.email,
+      })
+        .from(auditLogs)
+        .leftJoin(users, eq(auditLogs.userId, users.id))
+        .orderBy(desc(auditLogs.createdAt))
+        .limit(input.limit)
+        .offset((input.page - 1) * input.limit);
+    }),
+
+  // ── Suspend/Unsuspend User ──
+  suspendUser: adminProcedure
+    .input(z.object({ userId: z.number(), suspended: z.boolean() }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      if (input.userId === ctx.user.id) throw new TRPCError({ code: "BAD_REQUEST", message: "Cannot suspend your own account" });
+      // We use the loginMethod field as a suspension flag (prefix 'suspended:')
+      const [target] = await db.select().from(users).where(eq(users.id, input.userId)).limit(1);
+      if (!target) throw new TRPCError({ code: "NOT_FOUND" });
+      const newMethod = input.suspended
+        ? `suspended:${target.loginMethod ?? "manus"}`
+        : (target.loginMethod ?? "manus").replace(/^suspended:/, "");
+      await db.update(users).set({ loginMethod: newMethod }).where(eq(users.id, input.userId));
+      await db.insert(auditLogs).values({
+        userId: ctx.user.id,
+        action: input.suspended ? "Suspended user account" : "Unsuspended user account",
+        entity: "user",
+        entityId: input.userId,
+        details: { suspended: input.suspended },
+      });
+      return { success: true };
+    }),
+
+  // ── System Stats ──
+  getSystemStats: adminProcedure.query(async () => {
+    const db = await getDb();
+    if (!db) return null;
+    const [{ totalUsers }] = await db.select({ totalUsers: count(users.id) }).from(users);
+    const [{ adminUsers }] = await db.select({ adminUsers: count(users.id) }).from(users).where(eq(users.role, "admin"));
+    const [{ totalContacts }] = await db.select({ totalContacts: count(contacts.id) }).from(contacts);
+    const [{ totalCampaigns }] = await db.select({ totalCampaigns: count(campaigns.id) }).from(campaigns);
+    const [{ totalConversations }] = await db.select({ totalConversations: count(conversations.id) }).from(conversations);
+    const [{ activeSessions }] = await db.select({ activeSessions: count(userSessions.id) }).from(userSessions).where(eq(userSessions.isActive, true));
+    const recentLogs = await db.select().from(auditLogs).orderBy(desc(auditLogs.createdAt)).limit(5);
+    // Integration health: check which integrations are active
+    const allIntegrations = await db.select({ provider: integrations.provider, status: integrations.status })
+      .from(integrations);
+    const connectedProviders = new Set(allIntegrations.filter(i => i.status === "connected").map(i => i.provider));
+    const integrationHealth = [
+      { name: "GoHighLevel", status: connectedProviders.has("ghl") ? "connected" : "disconnected" },
+      { name: "WhatsApp Business", status: connectedProviders.has("whatsapp") ? "connected" : "disconnected" },
+      { name: "Meta Ads", status: connectedProviders.has("meta") ? "connected" : "disconnected" },
+      { name: "Email (SMTP)", status: connectedProviders.has("email") ? "connected" : "disconnected" },
+      { name: "n8n Workflows", status: connectedProviders.has("n8n") ? "connected" : "disconnected" },
+    ];
+    return {
+      totalUsers,
+      adminUsers,
+      totalContacts,
+      totalCampaigns,
+      totalConversations,
+      activeSessions,
+      recentLogs,
+      integrationHealth,
+      serverTime: new Date(),
+      nodeVersion: process.version,
+      uptime: Math.floor(process.uptime()),
+    };
+  }),
+
+  // ── Permissions Matrix ──
+  getPermissionsMatrix: adminProcedure.query(() => {
+    return [
+      { module: "Dashboard", user: true, admin: true },
+      { module: "CRM", user: true, admin: true },
+      { module: "Campaigns", user: true, admin: true },
+      { module: "Social Media", user: true, admin: true },
+      { module: "Funnels", user: true, admin: true },
+      { module: "Inbox", user: true, admin: true },
+      { module: "AI Copilots", user: true, admin: true },
+      { module: "Reports", user: true, admin: true },
+      { module: "Integrations", user: true, admin: true },
+      { module: "Admin Panel", user: false, admin: true },
+      { module: "User Management", user: false, admin: true },
+      { module: "App Settings", user: false, admin: true },
+      { module: "Audit Logs", user: false, admin: true },
+      { module: "System Health", user: false, admin: true },
+    ];
+  }),
+});
+
 // ─── APP ROUTER ───────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -739,6 +977,7 @@ export const appRouter = router({
   ai: aiRouter,
   reports: reportsRouter,
   integrations: integrationsRouter,
+  admin: adminRouter,
 });
 
 export type AppRouter = typeof appRouter;

@@ -32,6 +32,7 @@ import {
   LogOut,
   Globe,
   Zap,
+  Shield,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -136,6 +137,38 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom section */}
       <div className={cn("border-t border-sidebar-border p-3 space-y-1", collapsed && "px-2")}>
+        {/* Admin Panel — only visible to admin users */}
+        {user?.role === "admin" && (
+          collapsed ? (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Link href="/admin">
+                  <div className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-lg mx-auto cursor-pointer transition-all",
+                    location === "/admin"
+                      ? "bg-orange-500 text-white shadow-md"
+                      : "text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
+                  )}>
+                    <Shield className="w-5 h-5" />
+                  </div>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">Admin Panel</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link href="/admin">
+              <div className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all",
+                location === "/admin"
+                  ? "bg-orange-500 text-white shadow-md"
+                  : "text-orange-400 hover:bg-orange-500/20 hover:text-orange-300"
+              )}>
+                <Shield className="w-5 h-5 flex-shrink-0" />
+                <span className="text-sm font-medium">Admin Panel</span>
+              </div>
+            </Link>
+          )
+        )}
         {/* Settings */}
         {collapsed ? (
           <Tooltip delayDuration={0}>

@@ -95,3 +95,65 @@ describe("router structure", () => {
     expect(appRouter._def.record).toHaveProperty("reports");
   });
 });
+
+// ─── Admin Router Tests ───────────────────────────────────────────────────────
+describe("admin router", () => {
+  it("admin.listUsers is accessible to admin users", () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    expect(caller.admin).toBeDefined();
+    expect(typeof caller.admin.listUsers).toBe("function");
+  });
+
+  it("admin.listSettings is accessible to admin users", () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    expect(typeof caller.admin.listSettings).toBe("function");
+  });
+
+  it("admin.getPermissionsMatrix returns 14 module entries", async () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    const matrix = await caller.admin.getPermissionsMatrix();
+    expect(Array.isArray(matrix)).toBe(true);
+    expect(matrix.length).toBe(14);
+  });
+
+  it("admin.getPermissionsMatrix marks Admin Panel as admin-only", async () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    const matrix = await caller.admin.getPermissionsMatrix();
+    const adminPanel = matrix.find((m) => m.module === "Admin Panel");
+    expect(adminPanel).toBeDefined();
+    expect(adminPanel?.user).toBe(false);
+    expect(adminPanel?.admin).toBe(true);
+  });
+
+  it("admin.getSystemStats procedure exists and is callable", () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    // Only verify the procedure is exposed — actual DB call would fail in test env
+    expect(typeof caller.admin.getSystemStats).toBe("function");
+  });
+
+  it("non-admin user is forbidden from admin procedures", async () => {
+    const { ctx } = createAuthContext("user");
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.admin.getPermissionsMatrix()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("admin router exposes all required procedures", () => {
+    const { ctx } = createAuthContext("admin");
+    const caller = appRouter.createCaller(ctx);
+    const procedures = [
+      "listUsers", "getUserDetail", "updateUserRole", "deleteUser",
+      "listSettings", "updateSetting", "listAuditLogs",
+      "getSystemStats", "getPermissionsMatrix",
+    ];
+    procedures.forEach((proc) => {
+      expect(typeof (caller.admin as Record<string, unknown>)[proc]).toBe("function");
+    });
+  });
+});

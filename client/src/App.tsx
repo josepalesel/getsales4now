@@ -16,6 +16,7 @@ import InboxPage from "./pages/Inbox";
 import AIAgents from "./pages/AIAgents";
 import Reports from "./pages/Reports";
 import Integrations from "./pages/Integrations";
+import Admin from "./pages/Admin";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
       <Route path="/ai" component={AIAgents} />
       <Route path="/reports" component={Reports} />
       <Route path="/integrations" component={Integrations} />
+      <Route path="/admin" component={Admin} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
