@@ -33,6 +33,7 @@ import {
   Globe,
   Zap,
   Shield,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -57,6 +58,7 @@ const NAV_ITEMS: NavItem[] = [
   { icon: Bot, labelKey: "nav.ai", path: "/ai" },
   { icon: BarChart3, labelKey: "nav.reports", path: "/reports" },
   { icon: Plug, labelKey: "nav.integrations", path: "/integrations" },
+  { icon: CreditCard, labelKey: "nav.billing", path: "/billing" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

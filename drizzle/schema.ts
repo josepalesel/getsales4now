@@ -330,3 +330,46 @@ export const userSessions = mysqlTable("user_sessions", {
   isActive: boolean("isActive").default(true).notNull(),
 });
 export type UserSession = typeof userSessions.$inferSelect;
+
+// ─── SUBSCRIPTIONS (Stripe + GHL provisioning) ────────────────────────────────
+export const subscriptions = mysqlTable("subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(),
+  plan: mysqlEnum("plan", ["free", "pro", "business", "agency"]).default("free").notNull(),
+  status: mysqlEnum("status", ["active", "trialing", "past_due", "canceled", "incomplete"]).default("active").notNull(),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }),
+  stripePriceId: varchar("stripePriceId", { length: 128 }),
+  // GHL sub-account provisioning
+  ghlLocationId: varchar("ghlLocationId", { length: 128 }),
+  ghlLocationName: varchar("ghlLocationName", { length: 200 }),
+  ghlProvisionedAt: timestamp("ghlProvisionedAt"),
+  ghlStatus: mysqlEnum("ghlStatus", ["pending", "provisioning", "active", "failed", "suspended"]).default("pending").notNull(),
+  // Limits based on plan
+  contactsLimit: int("contactsLimit").default(100),
+  usersLimit: int("usersLimit").default(1),
+  // Dates
+  trialEndsAt: timestamp("trialEndsAt"),
+  currentPeriodStart: timestamp("currentPeriodStart"),
+  currentPeriodEnd: timestamp("currentPeriodEnd"),
+  canceledAt: timestamp("canceledAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Subscription = typeof subscriptions.$inferSelect;
+export type InsertSubscription = typeof subscriptions.$inferInsert;
+
+// ─── GHL PROVISIONING LOG ─────────────────────────────────────────────────────
+export const ghlProvisioningLogs = mysqlTable("ghl_provisioning_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  subscriptionId: int("subscriptionId"),
+  action: varchar("action", { length: 64 }).notNull(), // create_location, create_user, assign_plan, etc.
+  status: mysqlEnum("status", ["pending", "success", "failed"]).default("pending").notNull(),
+  ghlLocationId: varchar("ghlLocationId", { length: 128 }),
+  requestPayload: json("requestPayload"),
+  responsePayload: json("responsePayload"),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GhlProvisioningLog = typeof ghlProvisioningLogs.$inferSelect;

@@ -26,6 +26,7 @@ export const translations = {
       ai: "AI Copilots",
       reports: "Reports",
       integrations: "Integrations",
+      billing: "Billing",
       settings: "Settings",
     },
     // Common
@@ -239,6 +240,7 @@ export const translations = {
       ai: "Copilotos IA",
       reports: "Reportes",
       integrations: "Integraciones",
+      billing: "Facturación",
       settings: "Configuración",
     },
     common: {
@@ -442,6 +444,7 @@ export const translations = {
       ai: "Copilotos IA",
       reports: "Relatórios",
       integrations: "Integrações",
+      billing: "Assinatura",
       settings: "Configurações",
     },
     common: {

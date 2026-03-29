@@ -145,3 +145,19 @@
 
 ## Bug Fixes
 - [x] Fix Vite HMR WebSocket connection error in dev environment
+
+## GHL Sub-Account Creation + Stripe Payments
+- [x] DB: subscriptions table (userId, plan, stripeCustomerId, stripeSubscriptionId, status, ghlLocationId)
+- [x] DB: plans table seeded (Free, Pro, Business, Agency)
+- [x] GHL API service: createLocation() helper using GHL API v2
+- [x] GHL API service: createUser() helper to add user to new location
+- [x] tRPC: billing router (getPlans, createCheckout, handleWebhook, getSubscription, cancelSubscription)
+- [x] tRPC: ghl provisioning router (createSubAccount, getSubAccountStatus)
+- [x] Stripe Checkout integration with plan selection
+- [x] Stripe webhook handler: provision GHL sub-account on payment success
+- [x] Pricing page /pricing with plan cards (Free, Pro, Business, Agency)
+- [x] Post-signup flow: plan selection → Stripe checkout → GHL sub-account creation → dashboard
+- [x] Subscription management page /billing (current plan, usage, upgrade/cancel)
+- [x] Plan-based feature flags middleware
+- [x] Admin panel: subscriptions tab with GHL sub-account status
+- [x] Vitest tests for billing and GHL provisioning logic

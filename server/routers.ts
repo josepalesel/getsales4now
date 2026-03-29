@@ -22,7 +22,26 @@ import {
   appSettings,
   auditLogs,
   userSessions,
+  subscriptions,
+  ghlProvisioningLogs,
 } from "../drizzle/schema";
+import {
+  createGhlLocation,
+  createGhlLocationUser,
+  validateGhlToken,
+  PLAN_LIMITS,
+  type PlanType,
+} from "./ghl";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
+
+// Stripe Price IDs (set via Stripe dashboard after creating products)
+const STRIPE_PRICES: Record<string, Record<string, string>> = {
+  pro: { monthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "" },
+  business: { monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "" },
+  agency: { monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "" },
+};
 import { TRPCError } from "@trpc/server";
 import { eq, desc, and, like, or, sql, count } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
@@ -964,6 +983,253 @@ const adminRouter = router({
   }),
 });
 
+// ─── BILLING ROUTER ─────────────────────────────────────────────────────────
+const billingRouter = router({
+  getPlans: publicProcedure.query(() => {
+    return [
+      {
+        id: "free",
+        name: "Free",
+        description: "Para começar e explorar a plataforma",
+        price: { monthly: 0, yearly: 0 },
+        currency: "USD",
+        limits: PLAN_LIMITS.free,
+        features: ["100 contatos", "1 usuário", "2 campanhas", "10 posts sociais", "50 créditos IA"],
+        highlighted: false,
+      },
+      {
+        id: "pro",
+        name: "Pro",
+        description: "Para pequenas empresas em crescimento",
+        price: { monthly: 97, yearly: 970 },
+        currency: "USD",
+        limits: PLAN_LIMITS.pro,
+        features: ["5.000 contatos", "3 usuários", "20 campanhas", "100 posts sociais", "500 créditos IA", "Sub-conta GHL incluída", "Inbox Omnichannel", "Suporte por email"],
+        highlighted: true,
+      },
+      {
+        id: "business",
+        name: "Business",
+        description: "Para empresas que precisam de escala",
+        price: { monthly: 197, yearly: 1970 },
+        currency: "USD",
+        limits: PLAN_LIMITS.business,
+        features: ["Contatos ilimitados", "10 usuários", "Campanhas ilimitadas", "Posts ilimitados", "2.000 créditos IA", "Sub-conta GHL incluída", "Todos os módulos", "Suporte prioritário"],
+        highlighted: false,
+      },
+      {
+        id: "agency",
+        name: "Agency",
+        description: "Para agências e revendedores",
+        price: { monthly: 497, yearly: 4970 },
+        currency: "USD",
+        limits: PLAN_LIMITS.agency,
+        features: ["Tudo ilimitado", "Usuários ilimitados", "IA ilimitada", "White-label", "Sub-contas múltiplas", "API completa", "Suporte dedicado", "Onboarding assistido"],
+        highlighted: false,
+      },
+    ];
+  }),
+
+  getSubscription: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+    return sub ?? null;
+  }),
+
+  createCheckout: protectedProcedure
+    .input(z.object({
+      plan: z.enum(["pro", "business", "agency"]),
+      billing: z.enum(["monthly", "yearly"]).default("monthly"),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const priceId = STRIPE_PRICES[input.plan]?.[input.billing];
+      // If no price ID configured yet, create a one-time price on the fly for testing
+      const origin = ctx.req.headers.origin as string ?? "https://getsales4now.agency";
+
+      const planPrices: Record<string, Record<string, number>> = {
+        pro: { monthly: 9700, yearly: 97000 },
+        business: { monthly: 19700, yearly: 197000 },
+        agency: { monthly: 49700, yearly: 497000 },
+      };
+
+      const sessionParams: Stripe.Checkout.SessionCreateParams = {
+        mode: "subscription",
+        customer_email: ctx.user.email ?? undefined,
+        allow_promotion_codes: true,
+        client_reference_id: ctx.user.id.toString(),
+        metadata: {
+          user_id: ctx.user.id.toString(),
+          plan: input.plan,
+          billing: input.billing,
+          customer_email: ctx.user.email ?? "",
+          customer_name: ctx.user.name ?? "",
+        },
+        success_url: `${origin}/billing?session_id={CHECKOUT_SESSION_ID}&success=true`,
+        cancel_url: `${origin}/pricing?canceled=true`,
+        line_items: [
+          priceId
+            ? { price: priceId, quantity: 1 }
+            : {
+                price_data: {
+                  currency: "usd",
+                  product_data: {
+                    name: `GetSales4Now ${input.plan.charAt(0).toUpperCase() + input.plan.slice(1)}`,
+                    description: `${input.plan} plan - ${input.billing} billing`,
+                  },
+                  unit_amount: planPrices[input.plan]?.[input.billing] ?? 9700,
+                  recurring: { interval: input.billing === "yearly" ? "year" : "month" },
+                },
+                quantity: 1,
+              },
+        ],
+      };
+
+      const session = await stripe.checkout.sessions.create(sessionParams);
+      return { url: session.url };
+    }),
+
+  cancelSubscription: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+    if (!sub?.stripeSubscriptionId) throw new TRPCError({ code: "NOT_FOUND", message: "No active subscription" });
+    await stripe.subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: true });
+    await db.update(subscriptions).set({ status: "canceled", canceledAt: new Date() }).where(eq(subscriptions.userId, ctx.user.id));
+    return { success: true };
+  }),
+
+  getProvisioningStatus: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+    if (!sub) return null;
+    const logs = await db.select().from(ghlProvisioningLogs).where(eq(ghlProvisioningLogs.userId, ctx.user.id)).orderBy(desc(ghlProvisioningLogs.createdAt)).limit(10);
+    return { subscription: sub, logs };
+  }),
+});
+
+// ─── GHL PROVISIONING ROUTER ─────────────────────────────────────────────────
+const ghlProvisioningRouter = router({
+  triggerProvisioning: protectedProcedure
+    .input(z.object({
+      ghlToken: z.string().min(10),
+      ghlCompanyId: z.string().min(5),
+      businessName: z.string().min(2),
+      businessEmail: z.string().email(),
+      businessPhone: z.string().optional(),
+      country: z.string().length(2).optional(),
+      timezone: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+      // Validate GHL token first
+      const isValid = await validateGhlToken(input.ghlToken);
+      if (!isValid) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid GHL token. Please check your Private Integration token." });
+
+      // Check subscription
+      const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+      if (!sub) throw new TRPCError({ code: "FORBIDDEN", message: "No active subscription found." });
+      if (sub.plan === "free") throw new TRPCError({ code: "FORBIDDEN", message: "GHL sub-account requires Pro plan or higher." });
+
+      // Log start
+      await db.insert(ghlProvisioningLogs).values({
+        userId: ctx.user.id,
+        subscriptionId: sub.id,
+        action: "create_location",
+        status: "pending",
+        requestPayload: { businessName: input.businessName, email: input.businessEmail },
+      });
+
+      // Update subscription to provisioning
+      await db.update(subscriptions).set({ ghlStatus: "provisioning" }).where(eq(subscriptions.userId, ctx.user.id));
+
+      try {
+        // Create GHL Location
+        const location = await createGhlLocation({
+          name: input.businessName,
+          email: input.businessEmail,
+          phone: input.businessPhone,
+          country: input.country ?? "US",
+          timezone: input.timezone ?? "America/New_York",
+          companyId: input.ghlCompanyId,
+          token: input.ghlToken,
+        });
+
+        // Create user in the new location
+        await createGhlLocationUser({
+          locationId: location.id,
+          name: ctx.user.name ?? input.businessName,
+          email: input.businessEmail,
+          role: "admin",
+          token: input.ghlToken,
+        });
+
+        // Update subscription with GHL location
+        await db.update(subscriptions).set({
+          ghlLocationId: location.id,
+          ghlLocationName: location.name,
+          ghlProvisionedAt: new Date(),
+          ghlStatus: "active",
+        }).where(eq(subscriptions.userId, ctx.user.id));
+
+        // Log success
+        await db.insert(ghlProvisioningLogs).values({
+          userId: ctx.user.id,
+          subscriptionId: sub.id,
+          action: "create_location",
+          status: "success",
+          ghlLocationId: location.id,
+          responsePayload: { locationId: location.id, locationName: location.name },
+        });
+
+        // Also save GHL token to integrations table
+        const [existingIntegration] = await db.select().from(integrations)
+          .where(and(eq(integrations.userId, ctx.user.id), eq(integrations.provider, "ghl")))
+          .limit(1);
+
+        if (existingIntegration) {
+          await db.update(integrations).set({
+            config: { companyId: input.ghlCompanyId, locationId: location.id, token: input.ghlToken },
+            status: "connected",
+            lastCheckedAt: new Date(),
+          }).where(eq(integrations.id, existingIntegration.id));
+        } else {
+          await db.insert(integrations).values({
+            userId: ctx.user.id,
+            provider: "ghl",
+            name: "GoHighLevel",
+            config: { companyId: input.ghlCompanyId, locationId: location.id, token: input.ghlToken },
+            status: "connected",
+            lastCheckedAt: new Date(),
+          });
+        }
+
+        return { success: true, locationId: location.id, locationName: location.name };
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : "Unknown error";
+        await db.update(subscriptions).set({ ghlStatus: "failed" }).where(eq(subscriptions.userId, ctx.user.id));
+        await db.insert(ghlProvisioningLogs).values({
+          userId: ctx.user.id,
+          subscriptionId: sub.id,
+          action: "create_location",
+          status: "failed",
+          errorMessage: errorMsg,
+        });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `GHL provisioning failed: ${errorMsg}` });
+      }
+    }),
+
+  getStatus: protectedProcedure.query(async ({ ctx }) => {
+    const db = await getDb();
+    if (!db) return null;
+    const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+    return sub ? { ghlStatus: sub.ghlStatus, ghlLocationId: sub.ghlLocationId, ghlLocationName: sub.ghlLocationName } : null;
+  }),
+});
+
 // ─── APP ROUTER ───────────────────────────────────────────────────────────────
 export const appRouter = router({
   system: systemRouter,
@@ -977,7 +1243,8 @@ export const appRouter = router({
   ai: aiRouter,
   reports: reportsRouter,
   integrations: integrationsRouter,
-  admin: adminRouter,
+   admin: adminRouter,
+  billing: billingRouter,
+  ghlProvisioning: ghlProvisioningRouter,
 });
-
 export type AppRouter = typeof appRouter;

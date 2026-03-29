@@ -17,6 +17,8 @@ import AIAgents from "./pages/AIAgents";
 import Reports from "./pages/Reports";
 import Integrations from "./pages/Integrations";
 import Admin from "./pages/Admin";
+import Pricing from "./pages/Pricing";
+import Billing from "./pages/Billing";
 
 function Router() {
   return (
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/reports" component={Reports} />
       <Route path="/integrations" component={Integrations} />
       <Route path="/admin" component={Admin} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/billing" component={Billing} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
