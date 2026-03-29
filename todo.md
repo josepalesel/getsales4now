@@ -117,7 +117,7 @@
 ## PWA & Performance
 - [x] PWA manifest.json with GetSales4Now branding
 - [x] Service worker for offline support
-- [ ] App icons (192x192, 512x512) — placeholder needed
+- [x] App icons (192x192, 512x512)
 - [x] Install prompt component
 - [x] Offline fallback page
 
