@@ -142,3 +142,6 @@
 - [x] System Health tab: server stats, DB status, integration health
 - [x] Admin access guard on frontend (redirect non-admins)
 - [x] Vitest tests for admin procedures
+
+## Bug Fixes
+- [x] Fix Vite HMR WebSocket connection error in dev environment

@@ -179,6 +179,13 @@ export default defineConfig({
       "localhost",
       "127.0.0.1",
     ],
+    hmr: {
+      // Use the same host/port as the HTTP connection so WebSocket
+      // tunnels through the same reverse-proxy path instead of trying
+      // a direct localhost:5173 WebSocket that is blocked in the sandbox.
+      clientPort: 443,
+      protocol: "wss",
+    },
     fs: {
       strict: true,
       deny: ["**/.*"],
