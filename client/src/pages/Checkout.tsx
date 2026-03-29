@@ -78,7 +78,7 @@ export default function Checkout() {
   const handleCheckout = () => {
     setIsLoading(true);
     createCheckoutMutation.mutate({
-      plan: planParam === "starter" ? "pro" : planParam === "business" ? "business" : "pro",
+      plan: planParam === "business" ? "business" : planParam === "agency" ? "agency" : "starter",
       billing: "monthly",
     });
   };
@@ -187,7 +187,7 @@ export default function Checkout() {
               </Button>
 
               <button
-                onClick={() => navigate("/dashboard")}
+                onClick={() => navigate("/welcome")}
                 className="w-full text-white/30 hover:text-white/60 text-sm transition-colors py-2"
               >
                 Skip for now — I'll add my card later

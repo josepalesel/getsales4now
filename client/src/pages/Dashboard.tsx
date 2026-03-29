@@ -23,6 +23,7 @@ import {
   AlertCircle,
   ArrowUpRight,
 } from "lucide-react";
+import React from "react";
 import {
   AreaChart,
   Area,
@@ -36,6 +37,8 @@ import {
   Cell,
 } from "recharts";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { CreditCard, X } from "lucide-react";
 
 const CHART_COLORS = ["#f97316", "#ef4444", "#3b82f6", "#10b981", "#8b5cf6"];
 
@@ -105,6 +108,9 @@ const MOCK_CHANNELS_DATA = [
 
 export default function Dashboard() {
   const { t, language } = useLanguage();
+  const { user } = useAuth();
+  const [trialBannerDismissed, setTrialBannerDismissed] = React.useState(false);
+  const { data: subscription } = trpc.billing.getSubscription.useQuery(undefined, { enabled: !!user });
   const { data: stats } = trpc.reports.getDashboardStats.useQuery();
   const { data: aiInsight, mutate: fetchAIInsight } = trpc.reports.getAISummary.useMutation();
 
@@ -146,6 +152,38 @@ export default function Dashboard() {
   return (
     <AppLayout>
       <div className="p-6 space-y-6">
+        {/* Trial Banner */}
+        {!trialBannerDismissed && subscription && subscription.status === 'trialing' && (() => {
+          const trialEnd = subscription.trialEndsAt ? new Date(subscription.trialEndsAt) : null;
+          const daysLeft = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000)) : 14;
+          return (
+            <div className="flex items-center justify-between bg-gradient-to-r from-orange-500/20 to-red-600/20 border border-orange-500/30 rounded-xl px-4 py-3">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                  <CreditCard className="w-4 h-4 text-orange-400" />
+                </div>
+                <div>
+                  <span className="text-white text-sm font-semibold">
+                    {daysLeft > 0 ? `${daysLeft} days left in your free trial` : 'Your trial has ended'}
+                  </span>
+                  <span className="text-gray-400 text-xs ml-2">
+                    — Add a payment method to continue after trial
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Link href="/billing">
+                  <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 h-7">
+                    Add Card
+                  </Button>
+                </Link>
+                <button onClick={() => setTrialBannerDismissed(true)} className="text-gray-500 hover:text-gray-300 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })()}
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

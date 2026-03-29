@@ -163,18 +163,18 @@
 - [x] Vitest tests for billing and GHL provisioning logic
 
 ## Auth Própria + Cadastro + Planos + GHL Onboarding
-- [ ] DB: adicionar campo passwordHash na tabela users
-- [ ] DB: adicionar campo emailVerified, trialEndsAt, trialStartedAt na tabela users
-- [ ] Backend: router auth.register (nome, email, senha, plano)
-- [ ] Backend: router auth.login (email, senha) com JWT cookie próprio
-- [ ] Backend: router auth.forgotPassword / resetPassword
-- [ ] Stripe: criar produtos Starter USD 118/mês e Business USD 398/mês com 14 dias trial
-- [ ] Stripe: createCheckout com trial_period_days: 14 e cartão obrigatório
-- [ ] Página /register: form nome, email, senha, conf senha + seleção de plano Starter/Business
-- [ ] Página /login: form email + senha com link "Esqueci minha senha"
-- [ ] Página /checkout: resumo do plano + redirecionamento Stripe Checkout
-- [ ] Página /welcome: pós-pagamento, confirma trial e inicia onboarding GHL
-- [ ] Wizard de onboarding da sub-conta GHL: nome empresa, país, telefone, segmento, GHL token
-- [ ] Integração GHL: criar sub-conta automaticamente ao completar onboarding
-- [ ] Dashboard: banner de trial com dias restantes e CTA para adicionar cartão
-- [ ] Testes Vitest para register, login e checkout flow
+- [x] DB: adicionar campo passwordHash na tabela users
+- [x] DB: adicionar campo emailVerified, trialEndsAt, trialStartedAt na tabela users
+- [x] Backend: router auth.register (nome, email, senha, plano)
+- [x] Backend: router auth.login (email, senha) com JWT cookie próprio
+- [x] Backend: router auth.forgotPassword / resetPassword
+- [x] Stripe: criar produtos Starter USD 118/mês e Business USD 398/mês com 14 dias trial
+- [x] Stripe: createCheckout com trial_period_days: 14 e cartão obrigatório
+- [x] Página /register: form nome, email, senha, conf senha + seleção de plano Starter/Business
+- [x] Página /login: form email + senha com link "Esqueci minha senha"
+- [x] Página /checkout: resumo do plano + redirecionamento Stripe Checkout
+- [x] Página /welcome: pós-pagamento, confirma trial e inicia onboarding GHL
+- [x] Wizard de onboarding da sub-conta GHL: nome empresa, país, telefone, segmento, GHL token
+- [x] Integração GHL: criar sub-conta automaticamente ao completar onboarding
+- [x] Dashboard: banner de trial com dias restantes e CTA para adicionar cartão
+- [x] Testes Vitest para register, login e checkout flow

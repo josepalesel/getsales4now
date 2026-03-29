@@ -989,44 +989,43 @@ const billingRouter = router({
   getPlans: publicProcedure.query(() => {
     return [
       {
-        id: "free",
-        name: "Free",
-        description: "Para começar e explorar a plataforma",
-        price: { monthly: 0, yearly: 0 },
-        currency: "USD",
-        limits: PLAN_LIMITS.free,
-        features: ["100 contatos", "1 usuário", "2 campanhas", "10 posts sociais", "50 créditos IA"],
-        highlighted: false,
-      },
-      {
-        id: "pro",
-        name: "Pro",
+        id: "starter",
+        name: "Starter",
         description: "Para pequenas empresas em crescimento",
-        price: { monthly: 97, yearly: 970 },
+        price: { monthly: 118, yearly: 1180 },
+        monthlyPrice: 118,
+        yearlyPrice: 1180,
         currency: "USD",
         limits: PLAN_LIMITS.pro,
-        features: ["5.000 contatos", "3 usuários", "20 campanhas", "100 posts sociais", "500 créditos IA", "Sub-conta GHL incluída", "Inbox Omnichannel", "Suporte por email"],
-        highlighted: true,
+        features: ["5.000 contatos", "3 usuários", "Email & WhatsApp", "CRM + Pipeline", "IA de conteúdo", "Sub-conta GHL incluída", "Suporte por email"],
+        highlighted: false,
+        trialDays: 14,
       },
       {
         id: "business",
         name: "Business",
-        description: "Para empresas que precisam de escala",
-        price: { monthly: 197, yearly: 1970 },
+        description: "Para empresas que precisam de escala e automação total",
+        price: { monthly: 398, yearly: 3980 },
+        monthlyPrice: 398,
+        yearlyPrice: 3980,
         currency: "USD",
         limits: PLAN_LIMITS.business,
-        features: ["Contatos ilimitados", "10 usuários", "Campanhas ilimitadas", "Posts ilimitados", "2.000 créditos IA", "Sub-conta GHL incluída", "Todos os módulos", "Suporte prioritário"],
-        highlighted: false,
+        features: ["Contatos ilimitados", "10 usuários", "Todos os canais", "6 IA Copilotos", "Sub-conta GHL incluída", "Inbox Omnichannel", "Todos os módulos", "Suporte prioritário"],
+        highlighted: true,
+        trialDays: 14,
       },
       {
         id: "agency",
         name: "Agency",
         description: "Para agências e revendedores",
-        price: { monthly: 497, yearly: 4970 },
+        price: { monthly: 997, yearly: 9970 },
+        monthlyPrice: 997,
+        yearlyPrice: 9970,
         currency: "USD",
         limits: PLAN_LIMITS.agency,
         features: ["Tudo ilimitado", "Usuários ilimitados", "IA ilimitada", "White-label", "Sub-contas múltiplas", "API completa", "Suporte dedicado", "Onboarding assistido"],
         highlighted: false,
+        trialDays: 14,
       },
     ];
   }),
@@ -1040,7 +1039,7 @@ const billingRouter = router({
 
   createCheckout: protectedProcedure
     .input(z.object({
-      plan: z.enum(["pro", "business", "agency"]),
+      plan: z.enum(["starter", "business", "agency"]),
       billing: z.enum(["monthly", "yearly"]).default("monthly"),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -1049,16 +1048,24 @@ const billingRouter = router({
       const origin = ctx.req.headers.origin as string ?? "https://getsales4now.agency";
 
       const planPrices: Record<string, Record<string, number>> = {
-        pro: { monthly: 9700, yearly: 97000 },
-        business: { monthly: 19700, yearly: 197000 },
-        agency: { monthly: 49700, yearly: 497000 },
+        starter: { monthly: 11800, yearly: 118000 },
+        business: { monthly: 39800, yearly: 398000 },
+        agency: { monthly: 99700, yearly: 997000 },
       };
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
         mode: "subscription",
         customer_email: ctx.user.email ?? undefined,
         allow_promotion_codes: true,
+        payment_method_collection: "always",
         client_reference_id: ctx.user.id.toString(),
+        subscription_data: {
+          trial_period_days: 14,
+          metadata: {
+            user_id: ctx.user.id.toString(),
+            plan: input.plan,
+          },
+        },
         metadata: {
           user_id: ctx.user.id.toString(),
           plan: input.plan,
@@ -1066,7 +1073,7 @@ const billingRouter = router({
           customer_email: ctx.user.email ?? "",
           customer_name: ctx.user.name ?? "",
         },
-        success_url: `${origin}/billing?session_id={CHECKOUT_SESSION_ID}&success=true`,
+        success_url: `${origin}/welcome?plan=${input.plan}&trial=true`,
         cancel_url: `${origin}/pricing?canceled=true`,
         line_items: [
           priceId

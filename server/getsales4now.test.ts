@@ -157,3 +157,164 @@ describe("admin router", () => {
     });
   });
 });
+
+// ─── Auth Own: Register / Login / Checkout Flow ───────────────────────────────
+
+describe("authOwn router structure", () => {
+  it("has register procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("authOwn.register");
+  });
+
+  it("has login procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("authOwn.login");
+  });
+
+  it("has forgotPassword procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("authOwn.forgotPassword");
+  });
+
+  it("has resetPassword procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("authOwn.resetPassword");
+  });
+});
+
+describe("billing router structure", () => {
+  it("has getPlans procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("billing.getPlans");
+  });
+
+  it("has createCheckout procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("billing.createCheckout");
+  });
+
+  it("has getSubscription procedure", () => {
+    expect(appRouter._def.procedures).toHaveProperty("billing.getSubscription");
+  });
+
+  it("getPlans returns Starter and Business plans", async () => {
+    const ctx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(ctx);
+    const plans = await caller.billing.getPlans();
+    expect(Array.isArray(plans)).toBe(true);
+    const planIds = plans.map((p: { id: string }) => p.id);
+    expect(planIds).toContain("starter");
+    expect(planIds).toContain("business");
+  });
+
+  it("Starter plan price is 118", async () => {
+    const ctx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(ctx);
+    const plans = await caller.billing.getPlans();
+    const starter = plans.find((p: { id: string }) => p.id === "starter");
+    expect(starter).toBeDefined();
+    expect(starter.monthlyPrice).toBe(118);
+  });
+
+  it("Business plan price is 398", async () => {
+    const ctx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(ctx);
+    const plans = await caller.billing.getPlans();
+    const business = plans.find((p: { id: string }) => p.id === "business");
+    expect(business).toBeDefined();
+    expect(business.monthlyPrice).toBe(398);
+  });
+});
+
+// ─── authOwn validation tests ─────────────────────────────────────────────────
+describe("authOwn.register validation", () => {
+  const publicCtx: TrpcContext = {
+    user: null,
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
+  };
+
+  it("rejects registration when passwords do not match", async () => {
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      caller.authOwn.register({
+        name: "Test User",
+        email: "test@example.com",
+        password: "password123",
+        confirmPassword: "different456",
+        plan: "starter",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("rejects registration with invalid email", async () => {
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      caller.authOwn.register({
+        name: "Test User",
+        email: "not-an-email",
+        password: "password123",
+        confirmPassword: "password123",
+        plan: "starter",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("rejects registration with password shorter than 8 chars", async () => {
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      caller.authOwn.register({
+        name: "Test User",
+        email: "valid@example.com",
+        password: "123",
+        confirmPassword: "123",
+        plan: "starter",
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("authOwn.login validation", () => {
+  const publicCtx: TrpcContext = {
+    user: null,
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: () => {} } as TrpcContext["res"],
+  };
+
+  it("rejects login with invalid email format", async () => {
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      caller.authOwn.login({ email: "not-valid", password: "password123" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects login with empty password", async () => {
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      caller.authOwn.login({ email: "user@example.com", password: "" })
+    ).rejects.toThrow();
+  });
+});
+
+describe("billing.createCheckout auth guard", () => {
+  it("rejects checkout for unauthenticated user (UNAUTHORIZED)", async () => {
+    const publicCtx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      (caller.billing as unknown as { createCheckout: (i: unknown) => Promise<unknown> }).createCheckout({
+        plan: "starter",
+        billing: "monthly",
+      })
+    ).rejects.toThrow();
+  });
+});

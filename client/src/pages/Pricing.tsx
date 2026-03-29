@@ -56,7 +56,7 @@ export default function Pricing() {
       return;
     }
     createCheckout.mutate({
-      plan: planId as "pro" | "business" | "agency",
+      plan: (planId === "pro" ? "starter" : planId) as "starter" | "business" | "agency",
       billing: yearly ? "yearly" : "monthly",
     });
   };
