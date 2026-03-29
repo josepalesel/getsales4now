@@ -7,16 +7,24 @@ import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
 export async function setupVite(app: Express, server: Server) {
-  const serverOptions = {
-    middlewareMode: true,
-    hmr: { server },
-    allowedHosts: true as const,
-  };
-
   const vite = await createViteServer({
     ...viteConfig,
     configFile: false,
-    server: serverOptions,
+    // server must be fully replaced (not merged) so that hmr settings
+    // take precedence over any hmr settings in vite.config.ts.
+    // clientPort:443 + protocol:wss makes the browser WebSocket connect
+    // through the same HTTPS reverse-proxy tunnel as the HTTP traffic,
+    // which is required in the Manus sandbox environment.
+    server: {
+      middlewareMode: true,
+      hmr: {
+        server,
+        clientPort: 443,
+        protocol: "wss",
+      },
+      allowedHosts: true as const,
+      fs: { strict: true, deny: ["**/.*"] },
+    },
     appType: "custom",
   });
 
