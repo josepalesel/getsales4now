@@ -8,15 +8,14 @@ import bcrypt from "bcryptjs";
 import { nanoid } from "nanoid";
 import { eq, or } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
-import { SignJWT, jwtVerify } from "jose";
 import { publicProcedure, protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { users, subscriptions } from "../../drizzle/schema";
 import { getSessionCookieOptions } from "../_core/cookies";
 import { COOKIE_NAME } from "../../shared/const";
 import { ENV } from "../_core/env";
+import { sdk } from "../_core/sdk";
 
-const JWT_SECRET = new TextEncoder().encode(ENV.cookieSecret);
 const SALT_ROUNDS = 10;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -29,12 +28,12 @@ async function verifyPassword(password: string, hash: string): Promise<boolean> 
   return bcrypt.compare(password, hash);
 }
 
-async function createSessionToken(userId: number, openId: string): Promise<string> {
-  return new SignJWT({ sub: openId, userId })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("30d")
-    .sign(JWT_SECRET);
+async function createSessionToken(openId: string, name: string): Promise<string> {
+  // Use sdk.signSession so the token is compatible with sdk.authenticateRequest()
+  return sdk.signSession(
+    { openId, appId: ENV.appId, name },
+    { expiresInMs: 30 * 24 * 60 * 60 * 1000 }
+  );
 }
 
 // ─── Router ───────────────────────────────────────────────────────────────────
@@ -105,8 +104,8 @@ export const authOwnRouter = router({
         ghlStatus: "pending",
       });
 
-      // Issue session cookie
-      const token = await createSessionToken(newUser.id, openId);
+      // Issue session cookie — use sdk.signSession so authenticateRequest() can verify it
+      const token = await createSessionToken(openId, input.name);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
@@ -149,8 +148,8 @@ export const authOwnRouter = router({
       // Update last signed in
       await db.update(users).set({ lastSignedIn: new Date() }).where(eq(users.id, user.id));
 
-      // Issue session cookie
-      const token = await createSessionToken(user.id, user.openId);
+      // Issue session cookie — use sdk.signSession so authenticateRequest() can verify it
+      const token = await createSessionToken(user.openId, user.name ?? user.email ?? "");
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 30 * 24 * 60 * 60 * 1000 });
 
