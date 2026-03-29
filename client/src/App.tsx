@@ -19,6 +19,10 @@ import Integrations from "./pages/Integrations";
 import Admin from "./pages/Admin";
 import Pricing from "./pages/Pricing";
 import Billing from "./pages/Billing";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Checkout from "./pages/Checkout";
+import GhlOnboarding from "./pages/GhlOnboarding";
 
 function Router() {
   return (
@@ -37,6 +41,10 @@ function Router() {
       <Route path="/admin" component={Admin} />
       <Route path="/pricing" component={Pricing} />
       <Route path="/billing" component={Billing} />
+      <Route path="/register" component={Register} />
+      <Route path="/login" component={Login} />
+      <Route path="/checkout" component={Checkout} />
+      <Route path="/ghl-onboarding" component={GhlOnboarding} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `users` ADD `passwordHash` varchar(255);\nALTER TABLE `users` ADD `emailVerified` boolean DEFAULT false NOT NULL;\nALTER TABLE `users` ADD `emailVerifyToken` varchar(128);\nALTER TABLE `users` ADD `resetPasswordToken` varchar(128);\nALTER TABLE `users` ADD `resetPasswordExpires` timestamp;\nALTER TABLE `users` ADD `trialStartedAt` timestamp;\nALTER TABLE `users` ADD `trialEndsAt` timestamp;\nALTER TABLE `users` ADD `selectedPlan` varchar(32);\nALTER TABLE `users` ADD `ghlOnboardingCompleted` boolean DEFAULT false NOT NULL;\nALTER TABLE `users` ADD `ghlOnboardingStep` int DEFAULT 0;\nALTER TABLE `users` ADD `companyPhone` varchar(30);\nALTER TABLE `users` ADD `companyWebsite` varchar(255);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 365kAbUzaqngDuD.7c1cde38b729 --database YU6nqmaEyUsACHGWVz8xRF --execute ALTER TABLE `users` ADD `passwordHash` varchar(255);\nALTER TABLE `users` ADD `emailVerified` boolean DEFAULT false NOT NULL;\nALTER TABLE `users` ADD `emailVerifyToken` varchar(128);\nALTER TABLE `users` ADD `resetPasswordToken` varchar(128);\nALTER TABLE `users` ADD `resetPasswordExpires` timestamp;\nALTER TABLE `users` ADD `trialStartedAt` timestamp;\nALTER TABLE `users` ADD `trialEndsAt` timestamp;\nALTER TABLE `users` ADD `selectedPlan` varchar(32);\nALTER TABLE `users` ADD `ghlOnboardingCompleted` boolean DEFAULT false NOT NULL;\nALTER TABLE `users` ADD `ghlOnboardingStep` int DEFAULT 0;\nALTER TABLE `users` ADD `companyPhone` varchar(30);\nALTER TABLE `users` ADD `companyWebsite` varchar(255);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 2366
+}

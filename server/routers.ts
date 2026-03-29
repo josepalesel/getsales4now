@@ -43,6 +43,7 @@ const STRIPE_PRICES: Record<string, Record<string, string>> = {
   agency: { monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "" },
 };
 import { TRPCError } from "@trpc/server";
+import { authOwnRouter } from "./routers/authOwn";
 import { eq, desc, and, like, or, sql, count } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 
@@ -1246,5 +1247,6 @@ export const appRouter = router({
    admin: adminRouter,
   billing: billingRouter,
   ghlProvisioning: ghlProvisioningRouter,
+  authOwn: authOwnRouter,
 });
 export type AppRouter = typeof appRouter;

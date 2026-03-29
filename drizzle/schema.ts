@@ -18,6 +18,20 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  // Own auth fields
+  passwordHash: varchar("passwordHash", { length: 255 }),
+  emailVerified: boolean("emailVerified").default(false).notNull(),
+  emailVerifyToken: varchar("emailVerifyToken", { length: 128 }),
+  resetPasswordToken: varchar("resetPasswordToken", { length: 128 }),
+  resetPasswordExpires: timestamp("resetPasswordExpires"),
+  trialStartedAt: timestamp("trialStartedAt"),
+  trialEndsAt: timestamp("trialEndsAt"),
+  selectedPlan: varchar("selectedPlan", { length: 32 }),
+  // GHL sub-account onboarding
+  ghlOnboardingCompleted: boolean("ghlOnboardingCompleted").default(false).notNull(),
+  ghlOnboardingStep: int("ghlOnboardingStep").default(0),
+  companyPhone: varchar("companyPhone", { length: 30 }),
+  companyWebsite: varchar("companyWebsite", { length: 255 }),
   role: mysqlEnum("role", ["user", "admin"]).default("user").notNull(),
   // i18n preferences
   uiLanguage: varchar("uiLanguage", { length: 10 }).default("en").notNull(),

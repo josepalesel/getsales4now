@@ -205,14 +205,14 @@ export default function Home() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <a href={getLoginUrl()}>
+            <Link href="/login">
               <Button variant="outline" size="sm">Login</Button>
-            </a>
-            <a href={getLoginUrl()}>
+            </Link>
+            <Link href="/register">
               <Button size="sm" className="brand-gradient text-white border-0 shadow-sm">
                 {t("landing.ctaPrimary")} <ArrowRight className="w-4 h-4 ml-1" />
-              </Button>
-            </a>
+                </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -244,12 +244,12 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <a href={getLoginUrl()}>
+              <Link href="/register">
                 <Button size="lg" className="brand-gradient text-white border-0 shadow-lg px-8 h-12 text-base font-semibold hover:opacity-90 transition-opacity">
                   {t("landing.ctaPrimary")}
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
-              </a>
+              </Link>
               <Link href="/demo">
                 <Button size="lg" variant="outline" className="px-8 h-12 text-base font-semibold">
                   {t("landing.ctaSecondary")}
@@ -349,12 +349,12 @@ export default function Home() {
               ? "Empieza gratis hoy. Sin tarjeta de crédito. Sin complicaciones."
               : "Start free today. No credit card. No complexity."}
           </p>
-          <a href={getLoginUrl()}>
+          <Link href="/register">
             <Button size="lg" className="bg-white text-primary hover:bg-white/90 font-bold px-10 h-12 text-base shadow-xl">
               {t("landing.ctaPrimary")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
-          </a>
+          </Link>
         </div>
       </section>
 
