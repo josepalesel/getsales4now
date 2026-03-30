@@ -281,3 +281,9 @@
 - [x] Formulário com 3 seções: dados da empresa, localização, segmento (12 opções visuais)
 - [x] Criar sub-conta GHL automaticamente ao submeter o formulário (usa GHL_API_KEY da agência)
 - [x] Tela de loading animada durante criação + tela de sucesso com confetti
+
+## Correção Fluxo Pós-Cadastro (Mar 30, 2026)
+- [x] Corrigir Welcome.tsx: agora redireciona automaticamente para /ghl-onboarding?paid=true
+- [x] Corrigir CriarConta.tsx: Stripe abre na mesma aba (window.location.href) não em nova aba
+- [x] Stripe success_url vai direto para /ghl-onboarding?paid=true
+- [x] GhlOnboarding.tsx: mostra formulário imediatamente com badge "Pagamento confirmado"

@@ -192,8 +192,8 @@ export default function CriarConta() {
 
       if (result.url) {
         toast.success("Redirecionando para o pagamento seguro...");
-        window.open(result.url, "_blank");
-        navigate("/ghl-onboarding?paid=pending");
+        // Redirecionar na mesma aba — Stripe vai redirecionar de volta para /ghl-onboarding?paid=true
+        window.location.href = result.url;
       }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Erro ao criar conta";
