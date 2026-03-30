@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripeWebhook";
+import { registerGhlWebhook } from "../ghlWebhook";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -33,6 +34,8 @@ async function startServer() {
   const server = createServer(app);
   // CRITICAL: Register Stripe webhook BEFORE express.json() to preserve raw body for signature verification
   registerStripeWebhook(app);
+  // Register GHL webhook for real-time event processing
+  registerGhlWebhook(app);
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));

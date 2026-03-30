@@ -186,7 +186,7 @@
 - [x] Sincronizar pipelines/oportunidades reais do GHL
 - [x] Sincronizar conversas reais do GHL no Inbox
 - [x] Criar sub-conta GHL automaticamente via API real
-- [ ] Webhook GHL para receber eventos em tempo real
+- [x] Webhook GHL para receber eventos em tempo real
 
 ## Stripe Price IDs + Sincronização GHL (Mar 30, 2026)
 - [x] Criar tabelas faltantes no banco (contacts, companies, pipelines, opportunities, tasks, campaigns, social_posts, funnels, conversations, messages, integrations, templates)

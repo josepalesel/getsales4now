@@ -16,6 +16,8 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 function getPlanFromPriceId(priceId: string): PlanType {
   const priceMap: Record<string, PlanType> = {
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY ?? ""]: "starter",
+    [process.env.STRIPE_PRICE_STARTER_YEARLY ?? ""]: "starter",
     [process.env.STRIPE_PRICE_PRO_MONTHLY ?? ""]: "pro",
     [process.env.STRIPE_PRICE_PRO_YEARLY ?? ""]: "pro",
     [process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? ""]: "business",
@@ -23,7 +25,7 @@ function getPlanFromPriceId(priceId: string): PlanType {
     [process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? ""]: "agency",
     [process.env.STRIPE_PRICE_AGENCY_YEARLY ?? ""]: "agency",
   };
-  return priceMap[priceId] ?? "pro";
+  return priceMap[priceId] ?? "starter";
 }
 
 export function registerStripeWebhook(app: Express) {
