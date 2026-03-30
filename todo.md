@@ -287,3 +287,19 @@
 - [x] Corrigir CriarConta.tsx: Stripe abre na mesma aba (window.location.href) não em nova aba
 - [x] Stripe success_url vai direto para /ghl-onboarding?paid=true
 - [x] GhlOnboarding.tsx: mostra formulário imediatamente com badge "Pagamento confirmado"
+
+## Auditoria Completa da Jornada (Mar 30, 2026)
+- [ ] Auditar Landing Page: CTAs apontam para /criar-conta com ?plan=
+- [ ] Auditar /criar-conta: 3 steps funcionais, plano pré-selecionado, sem campo GHL
+- [ ] Auditar Checkout Stripe: success_url correto, redirect na mesma aba
+- [ ] Auditar /ghl-onboarding: formulário aparece com paid=true, sem tela antiga
+- [ ] Auditar triggerProvisioning: usa GHL_API_KEY, campos corretos, erros tratados
+- [ ] Auditar createGhlLocation: endpoint correto, payload correto, resposta tratada
+- [ ] Corrigir todos os problemas encontrados
+
+## Correção SaaS GHL — Criar Sub-Conta em getsales4now.com (Mar 30, 2026)
+- [x] Identificar Company ID da plataforma SaaS getsales4now.com: Z7wqtlFSkgzBZS5X4dWj
+- [x] Corrigir createGhlLocation para usar companyId correto da SaaS
+- [x] Configurar GHL_COMPANY_ID como secret seguro no servidor
+- [x] Testar criação de sub-conta via API: criada com sucesso dentro de getsales4now.com
+- [x] Sub-conta de teste deletada após validação

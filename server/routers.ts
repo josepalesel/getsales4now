@@ -1205,14 +1205,17 @@ const ghlProvisioningRouter = router({
       await db.update(subscriptions).set({ ghlStatus: "provisioning" }).where(eq(subscriptions.userId, ctx.user.id));
 
       try {
-        // Criar sub-conta GHL usando token da agência
+        // Usar o Company ID da plataforma SaaS getsales4now.com
+        const ghlCompanyId = process.env.GHL_COMPANY_ID;
+        if (!ghlCompanyId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Company ID da plataforma SaaS não configurado." });
+        // Criar sub-conta GHL dentro da plataforma SaaS getsales4now.com
         const location = await createGhlLocation({
           name: input.businessName,
           email: input.businessEmail,
           phone: input.businessPhone,
           country: input.country ?? "BR",
           timezone: input.timezone ?? "America/Sao_Paulo",
-          companyId: "",
+          companyId: ghlCompanyId,
           token: agencyToken,
         });
 
