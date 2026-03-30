@@ -219,3 +219,12 @@
 ## Bug Fixes — Autenticação (Mar 30, 2026)
 - [x] Corrigir UX /register: quando e-mail já existe, mostrar mensagem clara com link para /login
 - [x] Melhorar tratamento de todos os erros de auth no frontend (mensagens amigáveis em PT-BR)
+
+## Redesign Funil Principal (Mar 30, 2026) — CONCLUÍDO
+- [x] Redesenhar Landing Page como funil de vendas: hero impactante + 3 planos + CTA único
+- [x] Simplificar Register: plano da URL pula seleção, textos em PT-BR, sem fricção
+- [x] Reescrever Onboarding Wizard em PT-BR: nome empresa, localização, segmento, token GHL
+- [x] Stripe success_url redireciona para /ghl-onboarding?paid=true após pagamento
+- [x] Tela de confirmação no wizard com badge "Pagamento confirmado"
+- [x] Criação automática da sub-conta GHL no último step do wizard
+- [x] Fluxo completo: Landing → Plano → Cadastro → Checkout → Wizard → GHL criado → Dashboard

@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -75,9 +75,14 @@ const PLANS = [
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Register() {
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const params = new URLSearchParams(search);
+  const planFromUrl = params.get("plan") as "starter" | "business" | null;
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [step, setStep] = useState<"plan" | "form">("plan");
+  // Se o plano veio na URL, pula direto para o formulário
+  const [step, setStep] = useState<"plan" | "form">(planFromUrl ? "form" : "plan");
   const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
 
   const {
@@ -88,8 +93,15 @@ export default function Register() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { plan: "starter" },
+    defaultValues: { plan: planFromUrl ?? "starter" },
   });
+
+  // Sincroniza o plano da URL com o formulário
+  useEffect(() => {
+    if (planFromUrl && (planFromUrl === "starter" || planFromUrl === "business")) {
+      setValue("plan", planFromUrl);
+    }
+  }, [planFromUrl, setValue]);
 
   const selectedPlan = watch("plan");
 
@@ -144,8 +156,8 @@ export default function Register() {
               <Clock className="w-4 h-4" />
               14-day free trial — no charge today
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Choose your plan</h1>
-            <p className="text-white/60 text-lg">Start free for 14 days. Cancel anytime.</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-white mb-3">Escolha seu plano</h1>
+            <p className="text-white/60 text-lg">14 dias grátis. Cancele a qualquer momento.</p>
           </div>
 
           {/* Plan Cards */}
@@ -186,7 +198,7 @@ export default function Register() {
                 </ul>
 
                 <div className={`w-full py-3 rounded-xl font-semibold text-white text-center bg-gradient-to-r ${plan.color} flex items-center justify-center gap-2`}>
-                  Start {plan.name} Trial
+                  Começar trial {plan.name}
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </button>
@@ -195,9 +207,9 @@ export default function Register() {
 
           {/* Trust badges */}
           <div className="flex flex-wrap items-center justify-center gap-6 mt-8 text-white/40 text-sm">
-            <div className="flex items-center gap-1.5"><Shield className="w-4 h-4" /> SSL Secured</div>
-            <div className="flex items-center gap-1.5"><CreditCard className="w-4 h-4" /> No charge for 14 days</div>
-            <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Cancel anytime</div>
+            <div className="flex items-center gap-1.5"><Shield className="w-4 h-4" /> Pagamento seguro SSL</div>
+            <div className="flex items-center gap-1.5"><CreditCard className="w-4 h-4" /> Sem cobrança por 14 dias</div>
+            <div className="flex items-center gap-1.5"><Clock className="w-4 h-4" /> Cancele a qualquer momento</div>
           </div>
         </div>
       </div>
@@ -218,8 +230,8 @@ export default function Register() {
           </div>
         </Link>
         <span className="text-white/50 text-sm">
-          Already have an account?{" "}
-          <Link href="/login" className="text-orange-400 hover:text-orange-300 font-medium">Sign in</Link>
+          Já tem uma conta?{" "}
+          <Link href="/login" className="text-orange-400 hover:text-orange-300 font-medium">Entrar</Link>
         </span>
       </header>
 
@@ -231,7 +243,7 @@ export default function Register() {
               onClick={() => setStep("plan")}
               className="text-white/50 hover:text-white text-sm flex items-center gap-1 transition-colors"
             >
-              ← Change plan
+              ← Trocar plano
             </button>
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${currentPlan.borderColor} ${currentPlan.bgColor}`}>
               {selectedPlan === "starter" ? <Zap className="w-3.5 h-3.5 text-orange-400" /> : <Building2 className="w-3.5 h-3.5 text-red-400" />}
@@ -242,19 +254,19 @@ export default function Register() {
           {/* Form card */}
           <div className="bg-[#0d1526] border border-white/10 rounded-2xl p-8">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white">Create your account</h1>
+              <h1 className="text-2xl font-bold text-white">Crie sua conta</h1>
               <p className="text-white/50 text-sm mt-1">
-                Start your 14-day free trial — no credit card charged today
+                Trial de 14 dias grátis — sem cobrança hoje
               </p>
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               {/* Name */}
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-sm">Full Name</Label>
+                <Label className="text-white/70 text-sm">Nome completo</Label>
                 <Input
                   {...register("name")}
-                  placeholder="John Smith"
+                  placeholder="João Silva"
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-orange-500 focus:ring-orange-500/20 h-11"
                 />
                 {errors.name && <p className="text-red-400 text-xs">{errors.name.message}</p>}
@@ -262,7 +274,7 @@ export default function Register() {
 
               {/* Email */}
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-sm">Email</Label>
+                <Label className="text-white/70 text-sm">E-mail</Label>
                 <Input
                   {...register("email")}
                   type="email"
@@ -295,12 +307,12 @@ export default function Register() {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-sm">Password</Label>
+                <Label className="text-white/70 text-sm">Senha</Label>
                 <div className="relative">
                   <Input
                     {...register("password")}
                     type={showPassword ? "text" : "password"}
-                    placeholder="Minimum 8 characters"
+                    placeholder="Mínimo 8 caracteres"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-orange-500 focus:ring-orange-500/20 h-11 pr-10"
                   />
                   <button
@@ -316,12 +328,12 @@ export default function Register() {
 
               {/* Confirm Password */}
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-sm">Confirm Password</Label>
+                <Label className="text-white/70 text-sm">Confirmar Senha</Label>
                 <div className="relative">
                   <Input
                     {...register("confirmPassword")}
                     type={showConfirm ? "text" : "password"}
-                    placeholder="Repeat your password"
+                    placeholder="Repita sua senha"
                     className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-orange-500 focus:ring-orange-500/20 h-11 pr-10"
                   />
                   <button
@@ -344,11 +356,11 @@ export default function Register() {
                 {registerMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Creating account...
+                    Criando conta...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
-                    Start Free Trial
+                    Iniciar Trial Grátis
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
@@ -358,16 +370,16 @@ export default function Register() {
               <div className="flex items-start gap-2 bg-green-500/10 border border-green-500/20 rounded-xl p-3 mt-2">
                 <Clock className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
                 <p className="text-green-300 text-xs leading-relaxed">
-                  <strong>14 days free.</strong> After registration, you'll add your credit card to secure your plan — but you won't be charged until your trial ends.
+                  <strong>14 dias grátis.</strong> Após o cadastro, você adicionará seu cartão para garantir o plano — mas não haverá cobrança até o fim do trial.
                 </p>
               </div>
 
               {/* Terms */}
               <p className="text-white/30 text-xs text-center">
-                By creating an account you agree to our{" "}
-                <span className="text-orange-400 cursor-pointer hover:underline">Terms of Service</span>{" "}
-                and{" "}
-                <span className="text-orange-400 cursor-pointer hover:underline">Privacy Policy</span>.
+                Ao criar uma conta você concorda com nossos{" "}
+                <span className="text-orange-400 cursor-pointer hover:underline">Termos de Serviço</span>{" "}
+                e{" "}
+                <span className="text-orange-400 cursor-pointer hover:underline">Política de Privacidade</span>.
               </p>
             </form>
           </div>

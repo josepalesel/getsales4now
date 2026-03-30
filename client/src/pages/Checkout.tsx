@@ -203,13 +203,6 @@ export default function Checkout() {
                 )}
               </Button>
 
-              <button
-                onClick={() => navigate("/welcome")}
-                className="w-full text-white/30 hover:text-white/60 text-sm transition-colors py-2"
-              >
-                Pular por agora — adicionarei meu cartão depois
-              </button>
-
               <div className="flex items-center justify-center gap-4 text-white/30 text-xs pt-2">
                 <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> SSL Seguro</div>
                 <div className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> Powered by Stripe</div>

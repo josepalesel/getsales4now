@@ -1119,8 +1119,8 @@ const billingRouter = router({
           customer_email: ctx.user.email ?? "",
           customer_name: ctx.user.name ?? "",
         },
-        success_url: `${origin}/welcome?plan=${input.plan}&trial=true`,
-        cancel_url: `${origin}/pricing?canceled=true`,
+        success_url: `${origin}/ghl-onboarding?plan=${input.plan}&paid=true`,
+        cancel_url: `${origin}/checkout?plan=${input.plan}&canceled=true`,
         line_items: [
           priceId
             ? { price: priceId, quantity: 1 }
