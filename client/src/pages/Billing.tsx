@@ -33,8 +33,7 @@ const GHL_STATUS_CONFIG = {
 export default function Billing() {
   const { user } = useAuth();
   const [showGhlForm, setShowGhlForm] = useState(false);
-  const [ghlToken, setGhlToken] = useState("");
-  const [ghlCompanyId, setGhlCompanyId] = useState("");
+
   const [businessName, setBusinessName] = useState(user?.name ?? "");
   const [businessEmail, setBusinessEmail] = useState(user?.email ?? "");
 
@@ -60,13 +59,12 @@ export default function Billing() {
   });
 
   const handleProvision = () => {
-    if (!ghlToken || !ghlCompanyId || !businessName || !businessEmail) {
-      toast.error("Preencha todos os campos obrigatórios.");
+    if (!businessName || !businessEmail) {
+      toast.error("Preencha o nome e e-mail da empresa.");
       return;
     }
+    // O token GHL é a GHL_API_KEY da agência — não é fornecido pelo cliente
     triggerProvisioning.mutate({
-      ghlToken,
-      ghlCompanyId,
       businessName,
       businessEmail,
     });
@@ -237,31 +235,10 @@ export default function Billing() {
                   Configurar Sub-conta GoHighLevel
                 </h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
-                  Insira seu token de Private Integration do GoHighLevel. Criaremos automaticamente uma sub-conta (Location) para o seu negócio com todas as permissões necessárias.
+                  Informe o nome e e-mail do seu negócio. Criaremos automaticamente uma sub-conta no GoHighLevel com todas as configurações necessárias.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <Label className="text-gray-300 text-xs">Token de Integração Privada *</Label>
-                    <Input
-                      type="password"
-                      placeholder="eyJhbGci..."
-                      value={ghlToken}
-                      onChange={(e) => setGhlToken(e.target.value)}
-                      className="bg-gray-800 border-gray-700 text-white text-sm"
-                    />
-                    <p className="text-gray-500 text-xs">GHL → Settings → Private Integrations</p>
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-gray-300 text-xs">Company ID da Agência *</Label>
-                    <Input
-                      placeholder="abc123xyz..."
-                      value={ghlCompanyId}
-                      onChange={(e) => setGhlCompanyId(e.target.value)}
-                      className="bg-gray-800 border-gray-700 text-white text-sm"
-                    />
-                    <p className="text-gray-500 text-xs">GHL → Settings → Company → ID</p>
-                  </div>
                   <div className="space-y-1">
                     <Label className="text-gray-300 text-xs">Nome do Negócio *</Label>
                     <Input

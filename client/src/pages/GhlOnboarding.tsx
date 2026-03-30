@@ -147,9 +147,6 @@ export interface WizardData {
   primaryObjective?: string;
   // Step 4
   channels?: string[];
-  // Step 5
-  ghlToken?: string;
-  ghlCompanyId?: string;
 }
 
 // ─── Progress Bar ─────────────────────────────────────────────────────────────
@@ -662,7 +659,7 @@ function StepReview({
     { label: "Cidade", value: [data.city, data.state].filter(Boolean).join(", ") || "—" },
     { label: "Segmento", value: bizType },
     { label: "Canais", value: channelLabels || "—" },
-    { label: "Token GHL", value: data.ghlToken ? "••••••••" + data.ghlToken.slice(-4) : "Não informado" },
+
   ];
 
   return (
@@ -755,13 +752,13 @@ export default function GhlOnboarding() {
 
   const handleProvision = () => {
     setIsProvisioning(true);
+    // O token GHL é a GHL_API_KEY da agência — não é fornecido pelo cliente
     provisionMutation.mutate({
       businessName: data.companyName ?? "Minha Empresa",
       businessEmail: data.companyEmail ?? "",
       businessPhone: data.companyPhone ?? "",
-      country: (data.country ?? "BR").slice(0, 2),
-      ghlToken: data.ghlToken ?? "",
-      ghlCompanyId: data.ghlCompanyId ?? "",
+      country: data.country ?? "BR",
+      timezone: data.country === "BR" ? "America/Sao_Paulo" : "America/New_York",
     });
   };
 
@@ -823,31 +820,18 @@ export default function GhlOnboarding() {
       loading={updateMutation.isPending}
       onNext={async (d) => {
         setData((prev) => ({ ...prev, ...d }));
-        await updateMutation.mutateAsync({ step: 4, data: { channels: d.channels } });
-        setStep(5);
+        await updateMutation.mutateAsync({ step: 4, data: { channels: d.channels }, completed: true });
+        setStep(5); // Vai direto para a revisão (step 5 = antigo step 6)
       }}
     />
   );
 
+  // Step 5 — Revisão final (sem step de token GHL)
   if (step === 5) return (
-    <StepGhlConnect
-      isPaid={isPaid}
-      defaultValues={{ ghlToken: data.ghlToken, ghlCompanyId: data.ghlCompanyId }}
-      onBack={() => setStep(4)}
-      loading={updateMutation.isPending}
-      onNext={async (d) => {
-        setData((prev) => ({ ...prev, ...d }));
-        await updateMutation.mutateAsync({ step: 5, data: { ghlToken: d.ghlToken, ghlCompanyId: d.ghlCompanyId }, completed: true });
-        setStep(6);
-      }}
-    />
-  );
-
-  if (step === 6) return (
     <StepReview
       isPaid={isPaid}
       data={{ ...data }}
-      onBack={() => setStep(5)}
+      onBack={() => setStep(4)}
       onConfirm={handleProvision}
       loading={provisionMutation.isPending}
     />

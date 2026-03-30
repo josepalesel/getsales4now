@@ -1167,28 +1167,32 @@ const billingRouter = router({
 const ghlProvisioningRouter = router({
   triggerProvisioning: protectedProcedure
     .input(z.object({
-      ghlToken: z.string().min(10),
-      ghlCompanyId: z.string().optional().default(""),
+      // NOTE: O token GHL NÃO é fornecido pelo cliente.
+      // A GHL_API_KEY da agência é usada automaticamente pelo servidor.
       businessName: z.string().min(2),
       businessEmail: z.string().email(),
       businessPhone: z.string().optional(),
-      country: z.string().length(2).optional(),
+      country: z.string().optional(),
       timezone: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const db = await getDb();
       if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-      // Validate GHL token first
-      const isValid = await validateGhlToken(input.ghlToken);
-      if (!isValid) throw new TRPCError({ code: "BAD_REQUEST", message: "Invalid GHL token. Please check your Private Integration token." });
+      // Usar a GHL_API_KEY da agência — o cliente NÃO fornece token
+      const agencyToken = process.env.GHL_API_KEY;
+      if (!agencyToken) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Configuração da agência incompleta. Entre em contato com o suporte." });
 
-      // Check subscription
+      // Validar o token da agência
+      const isValid = await validateGhlToken(agencyToken);
+      if (!isValid) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Token da agência inválido. Entre em contato com o suporte." });
+
+      // Verificar assinatura
       const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
-      if (!sub) throw new TRPCError({ code: "FORBIDDEN", message: "No active subscription found." });
-      if (sub.plan === "free") throw new TRPCError({ code: "FORBIDDEN", message: "GHL sub-account requires Pro plan or higher." });
+      if (!sub) throw new TRPCError({ code: "FORBIDDEN", message: "Nenhuma assinatura ativa encontrada." });
+      if (sub.plan === "free") throw new TRPCError({ code: "FORBIDDEN", message: "A criação de conta GHL requer um plano pago." });
 
-      // Log start
+      // Registrar início
       await db.insert(ghlProvisioningLogs).values({
         userId: ctx.user.id,
         subscriptionId: sub.id,
@@ -1197,28 +1201,28 @@ const ghlProvisioningRouter = router({
         requestPayload: { businessName: input.businessName, email: input.businessEmail },
       });
 
-      // Update subscription to provisioning
+      // Atualizar status para provisionando
       await db.update(subscriptions).set({ ghlStatus: "provisioning" }).where(eq(subscriptions.userId, ctx.user.id));
 
       try {
-        // Create GHL Location
+        // Criar sub-conta GHL usando token da agência
         const location = await createGhlLocation({
           name: input.businessName,
           email: input.businessEmail,
           phone: input.businessPhone,
-          country: input.country ?? "US",
-          timezone: input.timezone ?? "America/New_York",
-          companyId: input.ghlCompanyId,
-          token: input.ghlToken,
+          country: input.country ?? "BR",
+          timezone: input.timezone ?? "America/Sao_Paulo",
+          companyId: "",
+          token: agencyToken,
         });
 
-        // Create user in the new location
+        // Criar usuário admin na nova sub-conta
         await createGhlLocationUser({
           locationId: location.id,
           name: ctx.user.name ?? input.businessName,
           email: input.businessEmail,
           role: "admin",
-          token: input.ghlToken,
+          token: agencyToken,
         });
 
         // Update subscription with GHL location
@@ -1239,14 +1243,14 @@ const ghlProvisioningRouter = router({
           responsePayload: { locationId: location.id, locationName: location.name },
         });
 
-        // Also save GHL token to integrations table
+        // Salvar integração GHL na tabela de integrations
         const [existingIntegration] = await db.select().from(integrations)
           .where(and(eq(integrations.userId, ctx.user.id), eq(integrations.provider, "ghl")))
           .limit(1);
 
         if (existingIntegration) {
           await db.update(integrations).set({
-            config: { companyId: input.ghlCompanyId, locationId: location.id, token: input.ghlToken },
+            config: { locationId: location.id },
             status: "connected",
             lastCheckedAt: new Date(),
           }).where(eq(integrations.id, existingIntegration.id));
@@ -1255,7 +1259,7 @@ const ghlProvisioningRouter = router({
             userId: ctx.user.id,
             provider: "ghl",
             name: "GoHighLevel",
-            config: { companyId: input.ghlCompanyId, locationId: location.id, token: input.ghlToken },
+            config: { locationId: location.id },
             status: "connected",
             lastCheckedAt: new Date(),
           });
