@@ -209,3 +209,9 @@
 - [x] Adicionar textos corretos dos planos (PT-BR) na página de Pricing
 - [x] Adicionar seção "Não incluído" e "Itens cobrados à parte" na página de Pricing
 - [x] Atualizar secrets STRIPE_PRICE_STARTER_MONTHLY e STRIPE_PRICE_BUSINESS_MONTHLY com novos IDs
+
+## Página de Demonstração — Cartões de Teste Stripe (Mar 30, 2026)
+- [x] Criar página /test-cards com cartões de teste do Stripe (copiar com 1 clique)
+- [x] Incluir tabela de cenários: aprovado, recusado, 3DS, fundos insuficientes, expirado
+- [x] Adicionar link de acesso rápido na página de Pricing
+- [x] Registrar rota /test-cards no App.tsx

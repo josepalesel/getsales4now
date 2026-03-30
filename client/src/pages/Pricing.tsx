@@ -436,10 +436,16 @@ export default function Pricing() {
         </div>
 
         {/* Trust badges */}
-        <div className="flex flex-wrap items-center justify-center gap-8 text-white/30 text-sm mb-12">
+        <div className="flex flex-wrap items-center justify-center gap-8 text-white/30 text-sm mb-6">
           <div className="flex items-center gap-2"><Shield className="w-4 h-4 text-green-500" />Pagamento seguro via Stripe</div>
           <div className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" />Cancele a qualquer momento</div>
           <div className="flex items-center gap-2"><Check className="w-4 h-4 text-green-500" />Suporte em PT-BR, EN e ES</div>
+        </div>
+        {/* Test cards link */}
+        <div className="flex justify-center mb-10">
+          <a href="/test-cards" className="inline-flex items-center gap-2 text-xs text-white/30 hover:text-orange-400 transition-colors border border-white/10 hover:border-orange-500/30 rounded-full px-4 py-1.5">
+            <span>💳</span> Ambiente de testes? Veja os cartões de teste do Stripe
+          </a>
         </div>
 
         {/* Closing CTA */}

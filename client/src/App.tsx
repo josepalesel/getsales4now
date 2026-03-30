@@ -24,6 +24,7 @@ import Login from "./pages/Login";
 import Checkout from "./pages/Checkout";
 import GhlOnboarding from "./pages/GhlOnboarding";
 import Welcome from "./pages/Welcome";
+import TestCards from "./pages/TestCards";
 
 function Router() {
   return (
@@ -47,6 +48,7 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
       <Route path="/ghl-onboarding" component={GhlOnboarding} />
       <Route path="/welcome" component={Welcome} />
+      <Route path="/test-cards" component={TestCards} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
