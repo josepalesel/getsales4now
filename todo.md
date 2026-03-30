@@ -215,3 +215,7 @@
 - [x] Incluir tabela de cenários: aprovado, recusado, 3DS, fundos insuficientes, expirado
 - [x] Adicionar link de acesso rápido na página de Pricing
 - [x] Registrar rota /test-cards no App.tsx
+
+## Bug Fixes — Autenticação (Mar 30, 2026)
+- [x] Corrigir UX /register: quando e-mail já existe, mostrar mensagem clara com link para /login
+- [x] Melhorar tratamento de todos os erros de auth no frontend (mensagens amigáveis em PT-BR)

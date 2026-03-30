@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Check, Zap, Building2, ArrowRight, Shield, Clock, CreditCard } from "lucide-react";
+import { Eye, EyeOff, Check, Zap, Building2, ArrowRight, Shield, Clock, CreditCard, AlertCircle, LogIn } from "lucide-react";
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 const registerSchema = z.object({
@@ -78,6 +78,7 @@ export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [step, setStep] = useState<"plan" | "form">("plan");
+  const [emailAlreadyExists, setEmailAlreadyExists] = useState(false);
 
   const {
     register,
@@ -94,12 +95,18 @@ export default function Register() {
 
   const registerMutation = trpc.authOwn.register.useMutation({
     onSuccess: (data) => {
-      toast.success(`Welcome, ${data.name}! Your 14-day trial has started.`);
-      // Redirect to checkout to add payment method
+      setEmailAlreadyExists(false);
+      toast.success(`Bem-vindo, ${data.name}! Seu trial de 14 dias foi iniciado.`);
       navigate("/checkout?plan=" + data.plan + "&trial=true");
     },
     onError: (err) => {
-      toast.error(err.message || "Registration failed. Please try again.");
+      const msg = err.message ?? "";
+      if (msg.includes("already exists") || msg.includes("já existe") || err.data?.code === "CONFLICT") {
+        setEmailAlreadyExists(true);
+      } else {
+        setEmailAlreadyExists(false);
+        toast.error(msg || "Falha no cadastro. Tente novamente.");
+      }
     },
   });
 
@@ -255,14 +262,35 @@ export default function Register() {
 
               {/* Email */}
               <div className="space-y-1.5">
-                <Label className="text-white/70 text-sm">Email Address</Label>
+                <Label className="text-white/70 text-sm">Email</Label>
                 <Input
                   {...register("email")}
                   type="email"
-                  placeholder="john@company.com"
-                  className="bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-orange-500 focus:ring-orange-500/20 h-11"
+                  placeholder="voce@empresa.com"
+                  onChange={() => setEmailAlreadyExists(false)}
+                  className={`bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-orange-500 focus:ring-orange-500/20 h-11 ${
+                    emailAlreadyExists ? "border-red-500 focus:border-red-500" : ""
+                  }`}
                 />
                 {errors.email && <p className="text-red-400 text-xs">{errors.email.message}</p>}
+                {/* E-mail duplicado — banner com link para login */}
+                {emailAlreadyExists && (
+                  <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-500/10 border border-red-500/30 mt-1">
+                    <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-red-300 text-xs font-semibold">Este e-mail já possui uma conta.</p>
+                      <p className="text-red-300/70 text-xs mt-0.5">
+                        Deseja entrar na sua conta existente?
+                      </p>
+                      <Link href="/login">
+                        <button className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors px-3 py-1.5 rounded-lg">
+                          <LogIn className="w-3.5 h-3.5" />
+                          Fazer login agora
+                        </button>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Password */}
