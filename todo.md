@@ -228,3 +228,22 @@
 - [x] Tela de confirmação no wizard com badge "Pagamento confirmado"
 - [x] Criação automática da sub-conta GHL no último step do wizard
 - [x] Fluxo completo: Landing → Plano → Cadastro → Checkout → Wizard → GHL criado → Dashboard
+
+## Bug Fix — GhlOnboarding Wizard (Mar 30, 2026)
+- [x] Corrigir erro "An unexpected error occurred" no wizard: React Hooks chamados dentro de if/condicionais
+- [x] Extrair cada step do wizard em sub-componentes separados com hooks no nível correto
+
+## Wizard Onboarding Estilo GHL (Mar 30, 2026)
+- [x] Corrigir bug React Hooks no GhlOnboarding.tsx (hooks dentro de if/condicionais)
+- [x] Extrair cada step em sub-componente separado com hooks no nível correto
+- [x] Step 0: Boas-vindas + confirmação de pagamento (badge verde)
+- [x] Step 1: Dados da empresa (nome, telefone, website, e-mail comercial)
+- [x] Step 2: Endereço e localização (país, estado, cidade, CEP)
+- [x] Step 3: Segmento e objetivo principal (cards visuais)
+- [x] Step 4: Canais de comunicação (WhatsApp, e-mail, SMS, Instagram, Facebook, Telegram)
+- [x] Step 5: Conectar GoHighLevel (token GHL + ID da empresa opcional)
+- [x] Step 6: Revisão e confirmação (resumo de todos os dados)
+- [x] Barra de progresso visual no topo com % e dots de navegação
+- [x] Tela de loading com 4 etapas animadas durante criação da sub-conta GHL
+- [x] Persistência de dados: salvar progresso a cada step via updateGhlOnboarding
+- [x] ghlCompanyId tornado opcional no triggerProvisioning (não bloqueia mais o fluxo)

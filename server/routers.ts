@@ -1168,7 +1168,7 @@ const ghlProvisioningRouter = router({
   triggerProvisioning: protectedProcedure
     .input(z.object({
       ghlToken: z.string().min(10),
-      ghlCompanyId: z.string().min(5),
+      ghlCompanyId: z.string().optional().default(""),
       businessName: z.string().min(2),
       businessEmail: z.string().email(),
       businessPhone: z.string().optional(),
