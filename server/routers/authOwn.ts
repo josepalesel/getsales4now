@@ -95,12 +95,14 @@ export const authOwnRouter = router({
       if (!newUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create user" });
 
       // Create subscription record (trial state, awaiting Stripe)
+      const planLimits = { starter: { contacts: 5000, users: 3 }, business: { contacts: -1, users: 10 } };
+      const limits = planLimits[input.plan];
       await db.insert(subscriptions).values({
         userId: newUser.id,
-        plan: input.plan === "starter" ? "pro" : "business",
+        plan: input.plan,
         status: "trialing",
-        contactsLimit: input.plan === "starter" ? 5000 : -1,
-        usersLimit: input.plan === "starter" ? 3 : 10,
+        contactsLimit: limits.contacts,
+        usersLimit: limits.users,
         ghlStatus: "pending",
       });
 

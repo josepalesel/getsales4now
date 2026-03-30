@@ -386,25 +386,21 @@ export async function getGhlAgencyInfo(token?: string): Promise<{ companyId: str
   return { companyId: response.company.id, name: response.company.name };
 }
 
-// ─── Plan Limits ──────────────────────────────────────────────────────────────
-
+// ─── Plan Limits ───────────// ─── Plan Limits ────────────────────────────────────────────────
+// Plans: free (sem plano), starter ($118/mês), business ($398/mês), corp (sob consulta)
 export const PLAN_LIMITS = {
-  free: { contacts: 100, users: 1, campaigns: 2, socialPosts: 10, funnels: 1, aiCredits: 50, ghlSubAccount: false },
-  starter: { contacts: 2500, users: 3, campaigns: 10, socialPosts: 50, funnels: 5, aiCredits: 300, ghlSubAccount: true },
-  pro: { contacts: 5000, users: 5, campaigns: 20, socialPosts: 100, funnels: 10, aiCredits: 500, ghlSubAccount: true },
-  business: { contacts: -1, users: 10, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: 2000, ghlSubAccount: true },
-  agency: { contacts: -1, users: -1, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: -1, ghlSubAccount: true },
+  free:     { contacts: 100,  users: 1,  campaigns: 2,  socialPosts: 10, funnels: 1,  aiCredits: 50,   ghlSubAccount: false },
+  starter:  { contacts: 5000, users: 3,  campaigns: 15, socialPosts: 60, funnels: 5,  aiCredits: 300,  ghlSubAccount: true },
+  business: { contacts: -1,   users: 10, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: 2000, ghlSubAccount: true },
+  corp:     { contacts: -1,   users: -1, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: -1,   ghlSubAccount: true },
 } as const;
 
 export type PlanType = keyof typeof PLAN_LIMITS;
 
 export const STRIPE_PRICE_IDS = {
-  starter_monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
-  starter_yearly: process.env.STRIPE_PRICE_STARTER_YEARLY ?? "",
-  pro_monthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "",
-  pro_yearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "",
+  starter_monthly:  process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
+  starter_yearly:   process.env.STRIPE_PRICE_STARTER_YEARLY ?? "",
   business_monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "",
-  business_yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "",
-  agency_monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "",
-  agency_yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "",
+  business_yearly:  process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "",
+  // Corp is contact-us only — no Stripe price IDs
 };

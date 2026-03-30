@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE subscriptions MODIFY COLUMN plan ENUM('free', 'starter', 'business', 'corp') NOT NULL DEFAULT 'free';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 365kAbUzaqngDuD.7c1cde38b729 --database YU6nqmaEyUsACHGWVz8xRF --execute ALTER TABLE subscriptions MODIFY COLUMN plan ENUM('free', 'starter', 'business', 'corp') NOT NULL DEFAULT 'free';",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1265 (01000) at line 1: Data truncated for column 'plan', value is 'pro'"
+  ]
+}

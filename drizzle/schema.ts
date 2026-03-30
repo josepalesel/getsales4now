@@ -361,7 +361,7 @@ export type UserSession = typeof userSessions.$inferSelect;
 export const subscriptions = mysqlTable("subscriptions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  plan: mysqlEnum("plan", ["free", "starter", "pro", "business", "agency"]).default("free").notNull(),
+  plan: mysqlEnum("plan", ["free", "starter", "business", "corp"]).default("free").notNull(),
   status: mysqlEnum("status", ["active", "trialing", "past_due", "canceled", "incomplete"]).default("active").notNull(),
   stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }),

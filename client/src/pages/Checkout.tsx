@@ -1,52 +1,69 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Clock, Shield, Check, ArrowRight, Zap, Building2 } from "lucide-react";
 
-const PLAN_DETAILS = {
+type PlanKey = "starter" | "business";
+
+const PLAN_DETAILS: Record<PlanKey, {
+  name: string;
+  price: string;
+  period: string;
+  icon: typeof Zap;
+  color: string;
+  borderColor: string;
+  bgColor: string;
+  features: string[];
+}> = {
   starter: {
     name: "Starter",
     price: "$118",
-    period: "/month",
+    period: "/mês",
     icon: Zap,
     color: "text-orange-400",
     borderColor: "border-orange-500/30",
     bgColor: "bg-orange-500/10",
-    features: ["5,000 contacts", "3 team members", "Email & WhatsApp", "CRM + Pipeline", "AI content"],
+    features: [
+      "1 conta da plataforma",
+      "CRM completo",
+      "Pipeline de vendas",
+      "Gestão de oportunidades",
+      "Calendário e agendamentos",
+      "Formulários",
+      "Landing pages e funis",
+      "Automação básica de follow-up",
+      "Conversas centralizadas",
+      "Suporte padrão",
+    ],
   },
   business: {
     name: "Business",
     price: "$398",
-    period: "/month",
+    period: "/mês",
     icon: Building2,
     color: "text-red-400",
     borderColor: "border-red-500/30",
     bgColor: "bg-red-500/10",
-    features: ["Unlimited contacts", "10 team members", "All channels", "AI copilots (6)", "GHL sub-account"],
-  },
-  pro: {
-    name: "Starter",
-    price: "$118",
-    period: "/month",
-    icon: Zap,
-    color: "text-orange-400",
-    borderColor: "border-orange-500/30",
-    bgColor: "bg-orange-500/10",
-    features: ["5,000 contacts", "3 team members", "Email & WhatsApp", "CRM + Pipeline", "AI content"],
-  },
-  free: {
-    name: "Free",
-    price: "$0",
-    period: "/month",
-    icon: Zap,
-    color: "text-gray-400",
-    borderColor: "border-gray-500/30",
-    bgColor: "bg-gray-500/10",
-    features: ["100 contacts", "1 user", "Basic CRM"],
+    features: [
+      "Tudo do Starter, mais:",
+      "Estrutura operacional mais robusta",
+      "Workflows mais avançados",
+      "Relatórios mais completos",
+      "Melhor suporte e onboarding",
+      "Mais capacidade de personalização",
+      "Estrutura para equipe comercial",
+      "Funis e rotinas mais sofisticados",
+      "Prioridade no suporte",
+    ],
   },
 };
+
+function normalizePlan(raw: string): PlanKey {
+  if (raw === "business") return "business";
+  return "starter";
+}
 
 export default function Checkout() {
   const [, navigate] = useLocation();
@@ -57,20 +74,20 @@ export default function Checkout() {
   const planParam = params.get("plan") ?? "starter";
   const isTrial = params.get("trial") === "true";
 
-  const planKey = (planParam === "pro" ? "starter" : planParam) as keyof typeof PLAN_DETAILS;
-  const plan = PLAN_DETAILS[planKey] ?? PLAN_DETAILS.starter;
+  const planKey = normalizePlan(planParam);
+  const plan = PLAN_DETAILS[planKey];
   const PlanIcon = plan.icon;
 
   const createCheckoutMutation = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         window.open(data.url, "_blank");
-        toast.info("Stripe checkout opened in a new tab. Complete your payment there.");
+        toast.info("Checkout Stripe aberto em nova aba. Conclua o pagamento lá.");
       }
       setIsLoading(false);
     },
     onError: (err) => {
-      toast.error(err.message || "Failed to start checkout. Please try again.");
+      toast.error(err.message || "Falha ao iniciar checkout. Tente novamente.");
       setIsLoading(false);
     },
   });
@@ -78,7 +95,7 @@ export default function Checkout() {
   const handleCheckout = () => {
     setIsLoading(true);
     createCheckoutMutation.mutate({
-      plan: planParam === "business" ? "business" : planParam === "agency" ? "agency" : "starter",
+      plan: planKey,
       billing: "monthly",
     });
   };
@@ -93,7 +110,7 @@ export default function Checkout() {
         </div>
         <div className="flex items-center gap-2 text-white/40 text-sm">
           <Shield className="w-4 h-4" />
-          Secured by Stripe
+          Protegido pelo Stripe
         </div>
       </header>
 
@@ -103,7 +120,7 @@ export default function Checkout() {
           {isTrial && (
             <div className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 rounded-full px-4 py-2 text-green-400 text-sm font-medium mb-6 w-fit mx-auto">
               <Clock className="w-4 h-4" />
-              14-day free trial — you won't be charged today
+              14 dias grátis — sem cobrança hoje
             </div>
           )}
 
@@ -115,8 +132,8 @@ export default function Checkout() {
                   <PlanIcon className={`w-5 h-5 ${plan.color}`} />
                 </div>
                 <div>
-                  <h2 className="text-white font-bold text-lg">{plan.name} Plan</h2>
-                  <p className="text-white/50 text-sm">Digital Marketing & Sales Automation</p>
+                  <h2 className="text-white font-bold text-lg">Plano {plan.name}</h2>
+                  <p className="text-white/50 text-sm">CRM, Automação e Crescimento</p>
                 </div>
               </div>
 
@@ -127,14 +144,14 @@ export default function Checkout() {
 
               {isTrial && (
                 <div className="mt-3 text-white/60 text-sm">
-                  First charge: <strong className="text-white">after 14-day trial ends</strong>
+                  Primeira cobrança: <strong className="text-white">após o período de 14 dias de trial</strong>
                 </div>
               )}
             </div>
 
             {/* Features included */}
             <div className="p-6 border-b border-white/10">
-              <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">What's included</h3>
+              <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">O que está incluído</h3>
               <ul className="space-y-2">
                 {plan.features.map((f) => (
                   <li key={f} className="flex items-center gap-2 text-white/80 text-sm">
@@ -147,13 +164,13 @@ export default function Checkout() {
 
             {/* What happens next */}
             <div className="p-6 border-b border-white/10">
-              <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">What happens next</h3>
+              <h3 className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Próximos passos</h3>
               <ol className="space-y-3">
                 {[
-                  { step: "1", text: "Click the button below to open Stripe's secure checkout" },
-                  { step: "2", text: "Add your credit card — no charge for 14 days" },
-                  { step: "3", text: "Return here to set up your GoHighLevel sub-account" },
-                  { step: "4", text: "Start using all features immediately" },
+                  { step: "1", text: "Clique abaixo para abrir o checkout seguro do Stripe" },
+                  { step: "2", text: "Adicione seu cartão — sem cobrança por 14 dias" },
+                  { step: "3", text: "Volte aqui para configurar sua sub-conta GoHighLevel" },
+                  { step: "4", text: "Comece a usar todos os recursos imediatamente" },
                 ].map((item) => (
                   <li key={item.step} className="flex items-start gap-3">
                     <span className="w-5 h-5 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
@@ -175,12 +192,12 @@ export default function Checkout() {
                 {isLoading || createCheckoutMutation.isPending ? (
                   <span className="flex items-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Opening Stripe...
+                    Abrindo Stripe...
                   </span>
                 ) : (
                   <span className="flex items-center gap-2">
                     <CreditCard className="w-5 h-5" />
-                    Add Payment Method
+                    Adicionar Forma de Pagamento
                     <ArrowRight className="w-4 h-4" />
                   </span>
                 )}
@@ -190,13 +207,13 @@ export default function Checkout() {
                 onClick={() => navigate("/welcome")}
                 className="w-full text-white/30 hover:text-white/60 text-sm transition-colors py-2"
               >
-                Skip for now — I'll add my card later
+                Pular por agora — adicionarei meu cartão depois
               </button>
 
               <div className="flex items-center justify-center gap-4 text-white/30 text-xs pt-2">
-                <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> SSL Secured</div>
+                <div className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> SSL Seguro</div>
                 <div className="flex items-center gap-1"><CreditCard className="w-3.5 h-3.5" /> Powered by Stripe</div>
-                <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Cancel anytime</div>
+                <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> Cancele quando quiser</div>
               </div>
             </div>
           </div>
@@ -204,7 +221,7 @@ export default function Checkout() {
           {/* Test card hint */}
           <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl">
             <p className="text-blue-300 text-xs text-center">
-              <strong>Test mode:</strong> Use card <code className="bg-blue-500/20 px-1 rounded">4242 4242 4242 4242</code> with any future expiry and any CVC.
+              <strong>Modo teste:</strong> Use o cartão <code className="bg-blue-500/20 px-1 rounded">4242 4242 4242 4242</code> com qualquer data futura e qualquer CVC.
             </p>
           </div>
         </div>

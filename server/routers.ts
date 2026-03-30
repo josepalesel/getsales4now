@@ -41,12 +41,11 @@ import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
 
-// Stripe Price IDs (set via Stripe dashboard after creating products)
+// Stripe Price IDs — Starter ($118/mo) and Business ($398/mo)
 const STRIPE_PRICES: Record<string, Record<string, string>> = {
   starter: { monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_STARTER_YEARLY ?? "" },
-  pro: { monthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "" },
   business: { monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "" },
-  agency: { monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "" },
+  // Corp is contact-us only — no Stripe price
 };
 import { TRPCError } from "@trpc/server";
 import { authOwnRouter } from "./routers/authOwn";
@@ -998,41 +997,83 @@ const billingRouter = router({
       {
         id: "starter",
         name: "Starter",
-        description: "Para pequenas empresas em crescimento",
-        price: { monthly: 118, yearly: 1180 },
+        description: "Ideal para pequenas empresas, profissionais liberais e operações em fase inicial.",
+        price: { monthly: 118, yearly: Math.round(118 * 12 * 0.8) },
         monthlyPrice: 118,
-        yearlyPrice: 1180,
+        yearlyPrice: Math.round(118 * 12 * 0.8),
         currency: "USD",
-        limits: PLAN_LIMITS.pro,
-        features: ["5.000 contatos", "3 usuários", "Email & WhatsApp", "CRM + Pipeline", "IA de conteúdo", "Sub-conta GHL incluída", "Suporte por email"],
+        limits: PLAN_LIMITS.starter,
+        features: [
+          "1 conta da plataforma",
+          "CRM completo",
+          "Pipeline de vendas",
+          "Gestão de oportunidades",
+          "Calendário e agendamentos",
+          "Formulários",
+          "Landing pages e funis",
+          "Automação básica de follow-up",
+          "Gestão de contatos",
+          "Dashboard básico",
+          "Conversas centralizadas",
+          "Suporte padrão",
+        ],
+        notIncluded: ["SMS", "Ligações", "WhatsApp", "Inteligência artificial", "Hospedagem WordPress", "Aplicativo white-label"],
+        summary: "Uma base sólida para empresas que precisam começar com organização, controle e automação sem entrar em uma estrutura complexa.",
         highlighted: false,
         trialDays: 14,
+        contactSales: false,
       },
       {
         id: "business",
         name: "Business",
-        description: "Para empresas que precisam de escala e automação total",
-        price: { monthly: 398, yearly: 3980 },
+        description: "Ideal para empresas em crescimento que precisam de mais robustez operacional e automação avançada.",
+        price: { monthly: 398, yearly: Math.round(398 * 12 * 0.8) },
         monthlyPrice: 398,
-        yearlyPrice: 3980,
+        yearlyPrice: Math.round(398 * 12 * 0.8),
         currency: "USD",
         limits: PLAN_LIMITS.business,
-        features: ["Contatos ilimitados", "10 usuários", "Todos os canais", "6 IA Copilotos", "Sub-conta GHL incluída", "Inbox Omnichannel", "Todos os módulos", "Suporte prioritário"],
+        features: [
+          "Tudo do Starter, mais:",
+          "Estrutura operacional mais robusta",
+          "Workflows mais avançados",
+          "Melhor organização de processos comerciais",
+          "Relatórios mais completos",
+          "Melhor suporte e onboarding",
+          "Mais capacidade de personalização",
+          "Estrutura para equipe comercial",
+          "Funis e rotinas mais sofisticados",
+          "Prioridade no suporte",
+        ],
+        notIncluded: ["SMS", "Ligações", "WhatsApp", "Inteligência artificial", "Hospedagem WordPress", "Aplicativo white-label"],
+        summary: "O plano mais equilibrado entre valor entregue, maturidade operacional e retorno sobre investimento.",
         highlighted: true,
         trialDays: 14,
+        contactSales: false,
       },
       {
-        id: "agency",
-        name: "Agency",
-        description: "Para agências e revendedores",
-        price: { monthly: 997, yearly: 9970 },
-        monthlyPrice: 997,
-        yearlyPrice: 9970,
+        id: "corp",
+        name: "Corp",
+        description: "Ideal para empresas com múltiplas unidades, maior volume de leads e necessidade de personalização.",
+        price: { monthly: 0, yearly: 0 },
+        monthlyPrice: 0,
+        yearlyPrice: 0,
         currency: "USD",
-        limits: PLAN_LIMITS.agency,
-        features: ["Tudo ilimitado", "Usuários ilimitados", "IA ilimitada", "White-label", "Sub-contas múltiplas", "API completa", "Suporte dedicado", "Onboarding assistido"],
+        limits: PLAN_LIMITS.business,
+        features: [
+          "Estrutura multiunidade",
+          "Operações com maior volume",
+          "Automação avançada",
+          "Integrações via API",
+          "Processos personalizados por departamento",
+          "Suporte consultivo",
+          "Arquitetura operacional sob medida",
+          "Possibilidade de SLA",
+        ],
+        notIncluded: [],
+        summary: "Um plano desenhado para empresas que precisam de flexibilidade, personalização e governança operacional em nível superior.",
         highlighted: false,
-        trialDays: 14,
+        trialDays: 0,
+        contactSales: true,
       },
     ];
   }),
@@ -1044,21 +1085,18 @@ const billingRouter = router({
     return sub ?? null;
   }),
 
-  createCheckout: protectedProcedure
+   createCheckout: protectedProcedure
     .input(z.object({
-      plan: z.enum(["starter", "pro", "business", "agency"]),
+      plan: z.enum(["starter", "business"]),
       billing: z.enum(["monthly", "yearly"]).default("monthly"),
     }))
     .mutation(async ({ ctx, input }) => {
       const priceId = STRIPE_PRICES[input.plan]?.[input.billing];
-      // If no price ID configured yet, create a one-time price on the fly for testing
       const origin = ctx.req.headers.origin as string ?? "https://getsales4now.agency";
-
+      // Real prices in cents
       const planPrices: Record<string, Record<string, number>> = {
-        starter: { monthly: 4900, yearly: 47040 },
-        pro: { monthly: 9900, yearly: 95040 },
-        business: { monthly: 19900, yearly: 191040 },
-        agency: { monthly: 49900, yearly: 479040 },
+        starter: { monthly: 11800, yearly: Math.round(118 * 12 * 0.8 * 100) },
+        business: { monthly: 39800, yearly: Math.round(398 * 12 * 0.8 * 100) },
       };
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {

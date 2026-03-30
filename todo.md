@@ -197,3 +197,15 @@
 - [x] Configurar STRIPE_PRICE_* IDs no ambiente
 - [x] Corrigir enum de planos no billing router (incluir starter e pro)
 - [x] Corrigir página Pricing para usar planId correto no checkout
+
+## Atualização de Planos (Mar 30, 2026)
+- [x] Criar novos produtos e preços no Stripe: Starter $118/mês e Business $398/mês
+- [x] Remover planos Pro e Agency do Stripe e do backend
+- [x] Atualizar enum de planos no schema Drizzle: starter, business, corp, free
+- [x] Atualizar PLAN_LIMITS no ghl.ts para os novos planos
+- [x] Atualizar STRIPE_PRICES no routers.ts para usar apenas starter e business
+- [x] Atualizar stripeWebhook.ts para mapear novos Price IDs
+- [x] Redesenhar página de Pricing com 3 planos: Starter ($118), Business ($398), Corp (sob consulta)
+- [x] Adicionar textos corretos dos planos (PT-BR) na página de Pricing
+- [x] Adicionar seção "Não incluído" e "Itens cobrados à parte" na página de Pricing
+- [x] Atualizar secrets STRIPE_PRICE_STARTER_MONTHLY e STRIPE_PRICE_BUSINESS_MONTHLY com novos IDs

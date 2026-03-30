@@ -16,14 +16,11 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 function getPlanFromPriceId(priceId: string): PlanType {
   const priceMap: Record<string, PlanType> = {
-    [process.env.STRIPE_PRICE_STARTER_MONTHLY ?? ""]: "starter",
-    [process.env.STRIPE_PRICE_STARTER_YEARLY ?? ""]: "starter",
-    [process.env.STRIPE_PRICE_PRO_MONTHLY ?? ""]: "pro",
-    [process.env.STRIPE_PRICE_PRO_YEARLY ?? ""]: "pro",
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY ?? ""]:  "starter",
+    [process.env.STRIPE_PRICE_STARTER_YEARLY ?? ""]:   "starter",
     [process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? ""]: "business",
-    [process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? ""]: "business",
-    [process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? ""]: "agency",
-    [process.env.STRIPE_PRICE_AGENCY_YEARLY ?? ""]: "agency",
+    [process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? ""]:  "business",
+    // Corp is contact-us only — no Stripe price IDs
   };
   return priceMap[priceId] ?? "starter";
 }
@@ -65,7 +62,7 @@ export function registerStripeWebhook(app: Express) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const userId = parseInt(session.metadata?.user_id ?? "0");
-            const plan = (session.metadata?.plan ?? "pro") as PlanType;
+            const plan = (session.metadata?.plan ?? "starter") as PlanType;
             const stripeCustomerId = session.customer as string;
             const stripeSubscriptionId = session.subscription as string;
 
