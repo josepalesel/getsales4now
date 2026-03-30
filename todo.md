@@ -247,3 +247,15 @@
 - [x] Tela de loading com 4 etapas animadas durante criação da sub-conta GHL
 - [x] Persistência de dados: salvar progresso a cada step via updateGhlOnboarding
 - [x] ghlCompanyId tornado opcional no triggerProvisioning (não bloqueia mais o fluxo)
+
+## Formulário de Criação de Sub-Conta (Mar 30, 2026)
+- [x] Criar página /criar-conta com formulário completo em PT-BR
+- [x] Step 1 — Dados pessoais: nome completo, e-mail, senha, telefone
+- [x] Step 2 — Dados da empresa: nome, segmento, website, país, estado, cidade
+- [x] Step 3 — Plano: seletor visual Starter ($118) / Business ($398) com features
+- [x] Step 4 — Conectar GHL: token da API privada (com guia de como obter)
+- [x] Validação em tempo real de todos os campos (react-hook-form + zod)
+- [x] Plano pré-selecionado via query param (?plan=starter ou ?plan=business)
+- [x] Botão "Criar Minha Conta" que dispara registro + checkout Stripe em sequência
+- [x] Registrar rota /criar-conta no App.tsx
+- [x] Todos os CTAs da landing page apontam para /criar-conta

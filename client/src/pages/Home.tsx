@@ -85,7 +85,7 @@ export default function Home() {
   const [, navigate] = useLocation();
 
   const handlePlanCTA = (planId: string) => {
-    navigate(`/register?plan=${planId}`);
+    navigate(`/criar-conta?plan=${planId}`);
   };
 
   // Loading state
