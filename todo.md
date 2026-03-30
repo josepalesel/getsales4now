@@ -261,12 +261,12 @@
 - [x] Todos os CTAs da landing page apontam para /criar-conta
 
 ## Correção Crítica — Onboarding sem token GHL do cliente (Mar 30, 2026)
-- [ ] Remover campo "Token GHL" do /criar-conta (token é interno da agência)
-- [ ] Simplificar /criar-conta: 3 steps apenas (dados pessoais, dados empresa, plano)
-- [ ] Recriar wizard /ghl-onboarding: dados empresa → sub-conta criada automaticamente
-- [ ] Backend usa GHL_API_KEY da agência (env var) para criar sub-conta, não token do cliente
-- [ ] Wizard com steps: Boas-vindas, Empresa, Endereço, Segmento, Canais, Revisão, Criando...
-- [ ] Tela final: "Sua conta está sendo configurada" com status animado
+- [x] Remover campo "Token GHL" do /criar-conta (token é interno da agência)
+- [x] Simplificar /criar-conta: 3 steps apenas (dados pessoais, dados empresa, plano)
+- [x] Recriar wizard /ghl-onboarding: dados empresa → sub-conta criada automaticamente
+- [x] Backend usa GHL_API_KEY da agência (env var) para criar sub-conta, não token do cliente
+- [x] Wizard com steps: Boas-vindas, Empresa, Endereço, Segmento, Canais, Revisão, Criando...
+- [x] Tela final: "Sua conta está sendo configurada" com status animado
 
 ## Correção Crítica — Token GHL removido do cliente (Mar 30, 2026)
 - [x] Remover campo ghlToken do GhlOnboarding.tsx (wizard não pede mais token ao cliente)
@@ -275,3 +275,9 @@
 - [x] Corrigir triggerProvisioning no backend para usar GHL_API_KEY da agência automaticamente
 - [x] Wizard agora tem 5 steps (sem step de token GHL): Boas-vindas → Empresa → Localização → Segmento → Canais → Revisão
 - [x] Formulário /criar-conta simplificado para 3 steps: dados pessoais, empresa, plano
+
+## Correção Fluxo Pós-Pagamento (Mar 30, 2026)
+- [x] Corrigir tela pós-pagamento: formulário único e limpo de criação de sub-conta
+- [x] Formulário com 3 seções: dados da empresa, localização, segmento (12 opções visuais)
+- [x] Criar sub-conta GHL automaticamente ao submeter o formulário (usa GHL_API_KEY da agência)
+- [x] Tela de loading animada durante criação + tela de sucesso com confetti
