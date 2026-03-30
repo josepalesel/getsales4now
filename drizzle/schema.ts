@@ -75,6 +75,10 @@ export const contacts = mysqlTable("contacts", {
   lastContactedAt: timestamp("lastContactedAt"),
   nextActionAt: timestamp("nextActionAt"),
   nextAction: text("nextAction"),
+  // GHL sync fields
+  ghlContactId: varchar("ghlContactId", { length: 128 }),
+  ghlLocationId: varchar("ghlLocationId", { length: 128 }),
+  ghlSyncedAt: timestamp("ghlSyncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -129,6 +133,10 @@ export const opportunities = mysqlTable("opportunities", {
   expectedCloseDate: timestamp("expectedCloseDate"),
   status: mysqlEnum("status", ["open", "won", "lost"]).default("open"),
   notes: text("notes"),
+  // GHL sync fields
+  ghlOpportunityId: varchar("ghlOpportunityId", { length: 128 }),
+  ghlLocationId: varchar("ghlLocationId", { length: 128 }),
+  ghlSyncedAt: timestamp("ghlSyncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -228,6 +236,10 @@ export const conversations = mysqlTable("conversations", {
   intentLabel: varchar("intentLabel", { length: 100 }),
   summary: text("summary"),
   lastMessageAt: timestamp("lastMessageAt").defaultNow(),
+  // GHL sync fields
+  ghlConversationId: varchar("ghlConversationId", { length: 128 }),
+  ghlLocationId: varchar("ghlLocationId", { length: 128 }),
+  ghlSyncedAt: timestamp("ghlSyncedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -349,7 +361,7 @@ export type UserSession = typeof userSessions.$inferSelect;
 export const subscriptions = mysqlTable("subscriptions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull().unique(),
-  plan: mysqlEnum("plan", ["free", "pro", "business", "agency"]).default("free").notNull(),
+  plan: mysqlEnum("plan", ["free", "starter", "pro", "business", "agency"]).default("free").notNull(),
   status: mysqlEnum("status", ["active", "trialing", "past_due", "canceled", "incomplete"]).default("active").notNull(),
   stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
   stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }),

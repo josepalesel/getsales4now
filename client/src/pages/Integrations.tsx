@@ -27,6 +27,11 @@ import {
   Zap,
   BarChart2,
   Link2,
+  Users,
+  TrendingUp,
+  Inbox,
+  ArrowDownToLine,
+  Loader2,
 } from "lucide-react";
 
 type Provider = "ghl" | "n8n" | "whatsapp" | "email" | "meta" | "linkedin" | "telephony" | "webhook";
@@ -78,52 +83,52 @@ const INTEGRATIONS_CATALOG: {
   },
   {
     id: "email",
-    name: "Email Provider",
-    description: "Connect SMTP, SendGrid, Mailgun or Amazon SES for email campaigns.",
+    name: "Email (SMTP)",
+    description: "Send transactional and campaign emails via your SMTP provider.",
     icon: Mail,
     color: "from-blue-400 to-blue-600",
     category: "Messaging",
     fields: [
-      { key: "provider", label: "Provider", placeholder: "sendgrid / mailgun / smtp" },
-      { key: "apiKey", label: "API Key", placeholder: "SG...." },
-      { key: "fromEmail", label: "From Email", placeholder: "noreply@yourdomain.com" },
+      { key: "host", label: "SMTP Host", placeholder: "smtp.gmail.com" },
+      { key: "port", label: "Port", placeholder: "587" },
+      { key: "user", label: "Username", placeholder: "you@example.com" },
+      { key: "password", label: "Password", placeholder: "••••••••", type: "password" },
     ],
   },
   {
     id: "meta",
-    name: "Meta (Facebook/Instagram)",
-    description: "Manage Meta ads, publish posts and track social performance.",
-    icon: Globe,
+    name: "Meta Ads",
+    description: "Run Facebook & Instagram ad campaigns and track conversions.",
+    icon: BarChart2,
     color: "from-blue-500 to-indigo-600",
-    category: "Social",
+    category: "Marketing",
     fields: [
       { key: "accessToken", label: "Access Token", placeholder: "EAABs...", type: "password" },
-      { key: "pageId", label: "Page ID", placeholder: "123456789" },
+      { key: "adAccountId", label: "Ad Account ID", placeholder: "act_1234567890" },
     ],
   },
   {
     id: "linkedin",
     name: "LinkedIn",
-    description: "Publish B2B content and manage LinkedIn company page.",
+    description: "Post content and generate B2B leads via LinkedIn API.",
     icon: Link2,
-    color: "from-blue-600 to-blue-800",
-    category: "Social",
+    color: "from-sky-500 to-sky-700",
+    category: "Marketing",
     fields: [
       { key: "accessToken", label: "Access Token", placeholder: "AQV...", type: "password" },
-      { key: "organizationId", label: "Organization ID", placeholder: "urn:li:organization:..." },
     ],
   },
   {
     id: "telephony",
-    name: "Telephony (VoIP)",
-    description: "Connect Twilio, Vonage or other VoIP providers for voice and SMS.",
+    name: "Telephony (Twilio)",
+    description: "Make and receive calls and SMS via Twilio integration.",
     icon: Phone,
-    color: "from-purple-400 to-purple-600",
+    color: "from-red-500 to-pink-600",
     category: "Messaging",
     fields: [
-      { key: "provider", label: "Provider", placeholder: "twilio / vonage" },
       { key: "accountSid", label: "Account SID", placeholder: "AC..." },
-      { key: "authToken", label: "Auth Token", placeholder: "...", type: "password" },
+      { key: "authToken", label: "Auth Token", placeholder: "••••••••", type: "password" },
+      { key: "phoneNumber", label: "Phone Number", placeholder: "+1234567890" },
     ],
   },
   {
@@ -211,6 +216,130 @@ function ConnectDialog({ integration, onSuccess }: { integration: typeof INTEGRA
   );
 }
 
+// ─── GHL Sync Panel ───────────────────────────────────────────────────────────
+function GhlSyncPanel() {
+  const { data: status } = trpc.ghlSync.getConnectionStatus.useQuery();
+  const { data: stats, refetch: refetchStats } = trpc.ghlSync.getSyncStats.useQuery();
+
+  const syncContacts = trpc.ghlSync.syncContacts.useMutation({
+    onSuccess: (r) => {
+      toast.success(`Contacts synced: ${r.created} created, ${r.updated} updated`);
+      refetchStats();
+    },
+    onError: (e) => toast.error(`Contacts sync failed: ${e.message}`),
+  });
+
+  const syncOpportunities = trpc.ghlSync.syncOpportunities.useMutation({
+    onSuccess: (r) => {
+      toast.success(`Opportunities synced: ${r.created} created, ${r.updated} updated`);
+      refetchStats();
+    },
+    onError: (e) => toast.error(`Opportunities sync failed: ${e.message}`),
+  });
+
+  const syncConversations = trpc.ghlSync.syncConversations.useMutation({
+    onSuccess: (r) => {
+      toast.success(`Conversations synced: ${r.created} created, ${r.updated} updated`);
+      refetchStats();
+    },
+    onError: (e) => toast.error(`Conversations sync failed: ${e.message}`),
+  });
+
+  const syncAll = trpc.ghlSync.syncAll.useMutation({
+    onSuccess: (r) => {
+      const { contacts: c, opportunities: o, conversations: cv } = r.results;
+      toast.success(`Full sync complete! Contacts: ${c.synced}, Opportunities: ${o.synced}, Conversations: ${cv.synced}`);
+      refetchStats();
+    },
+    onError: (e) => toast.error(`Full sync failed: ${e.message}`),
+  });
+
+  const isAnySyncing = syncContacts.isPending || syncOpportunities.isPending || syncConversations.isPending || syncAll.isPending;
+
+  if (!status?.connected) return null;
+
+  return (
+    <Card className="border-orange-200 dark:border-orange-900 bg-orange-50/50 dark:bg-orange-950/20">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white">
+              <Zap className="w-4 h-4" />
+            </div>
+            GoHighLevel Sync
+            <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 border-0 text-[10px]">
+              <CheckCircle2 className="w-3 h-3 mr-1" />
+              Connected
+            </Badge>
+          </CardTitle>
+          <Button
+            size="sm"
+            className="brand-gradient text-white border-0 h-8 text-xs gap-1.5"
+            disabled={isAnySyncing}
+            onClick={() => syncAll.mutate({})}
+          >
+            {syncAll.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ArrowDownToLine className="w-3.5 h-3.5" />}
+            Sync All
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Location: <span className="font-medium text-foreground">{status.locationName}</span>
+        </p>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          {[
+            { label: "Contacts", value: stats?.contacts ?? 0, icon: Users, color: "text-blue-500" },
+            { label: "Opportunities", value: stats?.opportunities ?? 0, icon: TrendingUp, color: "text-green-500" },
+            { label: "Conversations", value: stats?.conversations ?? 0, icon: Inbox, color: "text-purple-500" },
+          ].map((item) => (
+            <div key={item.label} className="bg-background rounded-lg p-3 border border-border text-center">
+              <item.icon className={cn("w-4 h-4 mx-auto mb-1", item.color)} />
+              <p className="text-lg font-bold">{item.value}</p>
+              <p className="text-[10px] text-muted-foreground">{item.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Individual sync buttons */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1.5"
+            disabled={isAnySyncing}
+            onClick={() => syncContacts.mutate({})}
+          >
+            {syncContacts.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Users className="w-3 h-3" />}
+            Contacts
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1.5"
+            disabled={isAnySyncing}
+            onClick={() => syncOpportunities.mutate({})}
+          >
+            {syncOpportunities.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <TrendingUp className="w-3 h-3" />}
+            Deals
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs gap-1.5"
+            disabled={isAnySyncing}
+            onClick={() => syncConversations.mutate({})}
+          >
+            {syncConversations.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Inbox className="w-3 h-3" />}
+            Inbox
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function Integrations() {
   const { t } = useLanguage();
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -238,6 +367,9 @@ export default function Integrations() {
             Connect your tools to automate workflows and sync data
           </p>
         </div>
+
+        {/* GHL Sync Panel */}
+        <GhlSyncPanel />
 
         {/* Connected integrations */}
         {(connected as Record<string, unknown>[]).length > 0 && (

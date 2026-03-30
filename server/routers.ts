@@ -29,6 +29,11 @@ import {
   createGhlLocation,
   createGhlLocationUser,
   validateGhlToken,
+  listGhlLocations,
+  listGhlContacts,
+  listGhlPipelines,
+  listGhlOpportunities,
+  listGhlConversations,
   PLAN_LIMITS,
   type PlanType,
 } from "./ghl";
@@ -38,12 +43,14 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "20
 
 // Stripe Price IDs (set via Stripe dashboard after creating products)
 const STRIPE_PRICES: Record<string, Record<string, string>> = {
+  starter: { monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_STARTER_YEARLY ?? "" },
   pro: { monthly: process.env.STRIPE_PRICE_PRO_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_PRO_YEARLY ?? "" },
   business: { monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "" },
   agency: { monthly: process.env.STRIPE_PRICE_AGENCY_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_AGENCY_YEARLY ?? "" },
 };
 import { TRPCError } from "@trpc/server";
 import { authOwnRouter } from "./routers/authOwn";
+import { ghlSyncRouter } from "./routers/ghlSyncRouter";
 import { eq, desc, and, like, or, sql, count } from "drizzle-orm";
 import { invokeLLM } from "./_core/llm";
 
@@ -1039,7 +1046,7 @@ const billingRouter = router({
 
   createCheckout: protectedProcedure
     .input(z.object({
-      plan: z.enum(["starter", "business", "agency"]),
+      plan: z.enum(["starter", "pro", "business", "agency"]),
       billing: z.enum(["monthly", "yearly"]).default("monthly"),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -1048,9 +1055,10 @@ const billingRouter = router({
       const origin = ctx.req.headers.origin as string ?? "https://getsales4now.agency";
 
       const planPrices: Record<string, Record<string, number>> = {
-        starter: { monthly: 11800, yearly: 118000 },
-        business: { monthly: 39800, yearly: 398000 },
-        agency: { monthly: 99700, yearly: 997000 },
+        starter: { monthly: 4900, yearly: 47040 },
+        pro: { monthly: 9900, yearly: 95040 },
+        business: { monthly: 19900, yearly: 191040 },
+        agency: { monthly: 49900, yearly: 479040 },
       };
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -1255,5 +1263,6 @@ export const appRouter = router({
   billing: billingRouter,
   ghlProvisioning: ghlProvisioningRouter,
   authOwn: authOwnRouter,
+  ghlSync: ghlSyncRouter,
 });
 export type AppRouter = typeof appRouter;

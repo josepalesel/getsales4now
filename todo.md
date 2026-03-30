@@ -178,3 +178,22 @@
 - [x] Integração GHL: criar sub-conta automaticamente ao completar onboarding
 - [x] Dashboard: banner de trial com dias restantes e CTA para adicionar cartão
 - [x] Testes Vitest para register, login e checkout flow
+
+## GHL Private API Integration (Real Data)
+- [x] Salvar GHL_API_KEY como secret seguro no projeto
+- [x] Validar conexão com GHL API v2 (GET /locations/search)
+- [x] Sincronizar contatos reais do GHL no CRM
+- [x] Sincronizar pipelines/oportunidades reais do GHL
+- [x] Sincronizar conversas reais do GHL no Inbox
+- [x] Criar sub-conta GHL automaticamente via API real
+- [ ] Webhook GHL para receber eventos em tempo real
+
+## Stripe Price IDs + Sincronização GHL (Mar 30, 2026)
+- [x] Criar tabelas faltantes no banco (contacts, companies, pipelines, opportunities, tasks, campaigns, social_posts, funnels, conversations, messages, integrations, templates)
+- [x] Adicionar campos GHL sync (ghlContactId, ghlOpportunityId, ghlConversationId) nas tabelas
+- [x] Criar ghlSyncRouter com procedures: syncContacts, syncOpportunities, syncConversations, syncAll
+- [x] Painel GHL Sync na página Integrations com stats e botões de sync
+- [x] Criar produtos e preços no Stripe (Starter $49, Pro $99, Business $199, Agency $499)
+- [x] Configurar STRIPE_PRICE_* IDs no ambiente
+- [x] Corrigir enum de planos no billing router (incluir starter e pro)
+- [x] Corrigir página Pricing para usar planId correto no checkout
