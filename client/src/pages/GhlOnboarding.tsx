@@ -26,7 +26,7 @@ import {
   Building2, Phone, Mail, MapPin, Globe,
   CheckCircle2, Rocket, Loader2, ArrowRight,
   Briefcase, Target, Zap, Check, Lock,
-  ExternalLink,
+  ExternalLink, CreditCard, AlertTriangle,
 } from "lucide-react";
 
 // ─── URL do painel SaaS GHL ───────────────────────────────────────────────────
@@ -248,6 +248,47 @@ function WaitingPaymentScreen({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+// ─── Tela de pagamento necessário ────────────────────────────────────────────
+function PaymentRequiredScreen({ plan, onGoToCheckout }: { plan?: string; onGoToCheckout: () => void }) {
+  return (
+    <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center px-4">
+      <div className="text-center max-w-md w-full">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-orange-500/30">
+          <CreditCard className="w-10 h-10 text-white" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-3">Pagamento necessário</h2>
+        <p className="text-white/60 text-sm mb-2">
+          Para criar sua conta GetSales4Now, você precisa completar o pagamento via Stripe.
+        </p>
+        <p className="text-white/40 text-xs mb-8">
+          Você terá <strong className="text-orange-400">14 dias grátis</strong> — nenhuma cobrança hoje. O cartão é necessário apenas para ativar o trial.
+        </p>
+        <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 text-left">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="w-4 h-4 text-yellow-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-white/70 text-sm font-medium mb-1">Por que preciso do cartão?</p>
+              <p className="text-white/40 text-xs">
+                O Stripe exige um cartão de crédito para ativar o período de trial. Você não será cobrado durante os 14 dias. Pode cancelar a qualquer momento.
+              </p>
+            </div>
+          </div>
+        </div>
+        <Button
+          onClick={onGoToCheckout}
+          className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl shadow-2xl shadow-orange-500/30 mb-3"
+        >
+          <CreditCard className="w-4 h-4 mr-2" />
+          Ir para o checkout — 14 dias grátis
+        </Button>
+        <p className="text-white/30 text-xs">
+          Plano {plan === "business" ? "Business — US$ 398/mês" : "Starter — US$ 118/mês"} após o trial
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // FORMULÁRIO PRINCIPAL
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -263,12 +304,33 @@ export default function GhlOnboarding() {
   const [companyName, setCompanyName] = useState("");
   const [locationId, setLocationId] = useState<string | undefined>();
   const [checkingSubscription, setCheckingSubscription] = useState(false);
+  const [paymentRequired, setPaymentRequired] = useState(false);
+  const [selectedPlan] = useState<string>(
+    new URLSearchParams(search).get("plan") ?? "starter"
+  );
 
   // Verificar status da assinatura (polling para aguardar webhook Stripe)
   const subscriptionStatus = trpc.ghlProvisioning.getStatus.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: isSuccess ? false : 5000, // Polling a cada 5s
   });
+
+  // Mutation para criar checkout Stripe
+  const checkoutMutation = trpc.billing.createCheckout.useMutation();
+
+  const handleGoToCheckout = async () => {
+    try {
+      const result = await checkoutMutation.mutateAsync({
+        plan: (selectedPlan === "business" ? "business" : "starter") as "starter" | "business",
+        billing: "monthly",
+      });
+      if (result.url) {
+        window.location.href = result.url;
+      }
+    } catch {
+      toast.error("Erro ao abrir o checkout. Tente novamente.");
+    }
+  };
 
   // Redirecionar para login se não autenticado
   useEffect(() => {
@@ -297,7 +359,10 @@ export default function GhlOnboarding() {
     onError: (err) => {
       setIsCreating(false);
       const msg = err.message || "Erro ao criar sub-conta.";
-      if (msg.includes("assinatura") || msg.includes("plano") || msg.includes("FORBIDDEN")) {
+      // Verificar se é erro de pagamento não confirmado
+      if (msg.includes("Pagamento não confirmado") || msg.includes("Complete o checkout")) {
+        setPaymentRequired(true);
+      } else if (msg.includes("assinatura") || msg.includes("plano") || msg.includes("FORBIDDEN")) {
         toast.error("Aguardando confirmação do pagamento. Tente novamente em alguns instantes.");
         setCheckingSubscription(true);
       } else {
@@ -359,6 +424,35 @@ export default function GhlOnboarding() {
       subscriptionStatus.refetch();
     }} />
   );
+
+  // Verificar se o pagamento foi confirmado antes de mostrar o formulário
+  // A verificação real é feita via banco/Stripe no backend (getStatus).
+  // O parâmetro ?paid=true da URL serve apenas para exibir o badge visual.
+  // Enquanto o status ainda está carregando, aguardar.
+  const statusData = subscriptionStatus.data;
+
+  // Se ainda está carregando o status, mostrar loading
+  if (subscriptionStatus.isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 text-orange-500 animate-spin mx-auto mb-3" />
+          <p className="text-white/50 text-sm">Verificando pagamento...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Verificar pagamento: banco confirma (stripeSubscriptionId presente) OU veio do Stripe agora (?paid=true)
+  // O ?paid=true é aceito como indicação temporária pois o webhook pode ainda não ter processado
+  const paymentIsConfirmed = (statusData?.paymentConfirmed === true) || isPaid;
+  if (!paymentIsConfirmed && !paymentRequired) {
+    return <PaymentRequiredScreen plan={selectedPlan} onGoToCheckout={handleGoToCheckout} />;
+  }
+
+  if (paymentRequired) {
+    return <PaymentRequiredScreen plan={selectedPlan} onGoToCheckout={handleGoToCheckout} />;
+  }
 
   // ─── Formulário principal ────────────────────────────────────────────────────
   return (

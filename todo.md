@@ -331,3 +331,10 @@
 - [x] Corrigir Login.tsx — respeitar parâmetro returnTo na URL
 - [x] Corrigir GhlOnboarding.tsx — encode correto do returnTo
 - [x] Validar fluxo: CriarConta -> Stripe -> GhlOnboarding -> GHL -> app.getsales4now.com
+
+## Bug Fix — Stripe Obrigatório Antes do GHL (Mar 31, 2026)
+- [x] Corrigir triggerProvisioning: exigir stripeSubscriptionId válido antes de criar sub-conta GHL
+- [x] Corrigir triggerProvisioning: verificar se status é "active" ou "trialing" COM stripeSubscriptionId
+- [x] Adicionar verificação direta na Stripe API para sessões de checkout com payment_status="paid" ou subscription ativa
+- [x] Bloquear acesso ao /ghl-onboarding se usuário não passou pelo Stripe (sem stripeSubscriptionId)
+- [x] Testar fluxo completo: cadastro → Stripe → onboarding → GHL criado

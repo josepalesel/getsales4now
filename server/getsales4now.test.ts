@@ -318,3 +318,50 @@ describe("billing.createCheckout auth guard", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("ghlProvisioning.triggerProvisioning — payment guard", () => {
+  it("rejects provisioning for unauthenticated user (UNAUTHORIZED)", async () => {
+    const publicCtx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(publicCtx);
+    await expect(
+      (caller.ghlProvisioning as unknown as { triggerProvisioning: (i: unknown) => Promise<unknown> }).triggerProvisioning({
+        businessName: "Test Company",
+        businessEmail: "test@company.com",
+        businessPhone: "+5511999999999",
+        country: "BR",
+        timezone: "America/Sao_Paulo",
+      })
+    ).rejects.toThrow();
+  });
+
+  it("rejects provisioning when user has no subscription in DB (FORBIDDEN)", async () => {
+    // User with id=9999 has no subscription record — should be rejected
+    const { ctx } = createAuthContext("user");
+    // Override user id to one that has no subscription
+    ctx.user = { ...ctx.user!, id: 9999 };
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.ghlProvisioning.triggerProvisioning({
+        businessName: "Test Company",
+        businessEmail: "test@company.com",
+        businessPhone: "+5511999999999",
+        country: "BR",
+        timezone: "America/Sao_Paulo",
+      })
+    ).rejects.toThrow();
+  });
+});
+
+describe("ghlProvisioning.getStatus — payment confirmed field", () => {
+  it("returns null when user has no subscription", async () => {
+    const { ctx } = createAuthContext("user");
+    ctx.user = { ...ctx.user!, id: 9999 };
+    const caller = appRouter.createCaller(ctx);
+    const result = await caller.ghlProvisioning.getStatus();
+    expect(result).toBeNull();
+  });
+});

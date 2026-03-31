@@ -1187,29 +1187,38 @@ const ghlProvisioningRouter = router({
       const isValid = await validateGhlToken(agencyToken);
       if (!isValid) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Token da agência inválido. Entre em contato com o suporte." });
 
-      // Verificar assinatura
-      // NOTA: O webhook do Stripe pode demorar alguns segundos após o redirect.
-      // Se não há assinatura ou o plano ainda é "free", verificamos via Stripe API diretamente.
+      // ─── VERIFICAÇÃO DE PAGAMENTO STRIPE ────────────────────────────────────────
+      // REGRA: A sub-conta GHL só pode ser criada se o usuário tiver um
+      // stripeSubscriptionId válido OU uma sessão de checkout paga no Stripe.
+      // Apenas ter um plano "starter" ou "business" no banco NÃO é suficiente —
+      // o usuário pode ter esse plano definido antes de pagar (durante o registro).
       let [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
 
-      if (!sub || sub.plan === "free") {
+      // Verificar se o pagamento foi confirmado: precisa de stripeSubscriptionId OU status active/trialing com stripeCustomerId
+      const hasConfirmedPayment = sub &&
+        sub.plan !== "free" &&
+        (sub.stripeSubscriptionId || sub.stripeCustomerId) &&
+        (sub.status === "active" || sub.status === "trialing");
+
+      if (!hasConfirmedPayment) {
         // Tentar buscar a sessão de checkout mais recente do Stripe para este usuário
+        // (o webhook pode demorar alguns segundos após o redirect)
+        let stripePaymentConfirmed = false;
         try {
-          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
-          const sessions = await stripe.checkout.sessions.list({
-            limit: 5,
-          });
-          // Procurar sessão com este user_id nos metadados
+          const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
+          const sessions = await stripeClient.checkout.sessions.list({ limit: 10 });
+          // Procurar sessão com este user_id nos metadados E com pagamento confirmado
           const userSession = sessions.data.find(
-            (s) => s.metadata?.user_id === ctx.user.id.toString() && s.payment_status === "paid"
+            (s) => s.metadata?.user_id === ctx.user.id.toString() &&
+              (s.payment_status === "paid" || s.status === "complete")
           );
-          if (userSession) {
+          if (userSession && userSession.subscription) {
+            stripePaymentConfirmed = true;
             const plan = (userSession.metadata?.plan ?? "starter") as PlanType;
             const limits = PLAN_LIMITS[plan];
             const stripeCustomerId = userSession.customer as string;
             const stripeSubscriptionId = userSession.subscription as string;
             if (!sub) {
-              // Criar assinatura no banco se não existe
               await db.insert(subscriptions).values({
                 userId: ctx.user.id,
                 plan,
@@ -1221,7 +1230,6 @@ const ghlProvisioningRouter = router({
                 ghlStatus: "pending",
               });
             } else {
-              // Atualizar plano se ainda é free
               await db.update(subscriptions).set({
                 plan,
                 status: "active",
@@ -1237,6 +1245,13 @@ const ghlProvisioningRouter = router({
           }
         } catch (stripeErr) {
           console.error("[GHL Provisioning] Erro ao verificar Stripe:", stripeErr);
+        }
+
+        if (!stripePaymentConfirmed) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Pagamento não confirmado. Complete o checkout do Stripe antes de criar sua conta. Se já pagou, aguarde alguns instantes e tente novamente.",
+          });
         }
       }
 
@@ -1344,7 +1359,18 @@ const ghlProvisioningRouter = router({
     const db = await getDb();
     if (!db) return null;
     const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
-    return sub ? { ghlStatus: sub.ghlStatus, ghlLocationId: sub.ghlLocationId, ghlLocationName: sub.ghlLocationName } : null;
+    if (!sub) return null;
+    const paymentConfirmed = !!(sub.stripeSubscriptionId || sub.stripeCustomerId) &&
+      (sub.status === "active" || sub.status === "trialing") &&
+      sub.plan !== "free";
+    return {
+      ghlStatus: sub.ghlStatus,
+      ghlLocationId: sub.ghlLocationId,
+      ghlLocationName: sub.ghlLocationName,
+      paymentConfirmed,
+      plan: sub.plan,
+      subscriptionStatus: sub.status,
+    };
   }),
 });
 
