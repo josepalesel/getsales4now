@@ -289,13 +289,13 @@
 - [x] GhlOnboarding.tsx: mostra formulário imediatamente com badge "Pagamento confirmado"
 
 ## Auditoria Completa da Jornada (Mar 30, 2026)
-- [ ] Auditar Landing Page: CTAs apontam para /criar-conta com ?plan=
-- [ ] Auditar /criar-conta: 3 steps funcionais, plano pré-selecionado, sem campo GHL
-- [ ] Auditar Checkout Stripe: success_url correto, redirect na mesma aba
-- [ ] Auditar /ghl-onboarding: formulário aparece com paid=true, sem tela antiga
-- [ ] Auditar triggerProvisioning: usa GHL_API_KEY, campos corretos, erros tratados
-- [ ] Auditar createGhlLocation: endpoint correto, payload correto, resposta tratada
-- [ ] Corrigir todos os problemas encontrados
+- [x] Auditar Landing Page: CTAs apontam para /criar-conta com ?plan=
+- [x] Auditar /criar-conta: 3 steps funcionais, plano pré-selecionado, sem campo GHL
+- [x] Auditar Checkout Stripe: success_url correto, redirect na mesma aba
+- [x] Auditar /ghl-onboarding: formulário aparece com paid=true, sem tela antiga
+- [x] Auditar triggerProvisioning: usa GHL_API_KEY, campos corretos, erros tratados
+- [x] Auditar createGhlLocation: endpoint correto, payload correto, resposta tratada
+- [x] Corrigir todos os problemas encontrados
 
 ## Correção SaaS GHL — Criar Sub-Conta em getsales4now.com (Mar 30, 2026)
 - [x] Identificar Company ID da plataforma SaaS getsales4now.com: Z7wqtlFSkgzBZS5X4dWj
@@ -305,14 +305,14 @@
 - [x] Sub-conta de teste deletada após validação
 
 ## Checkup Ponta a Ponta — Fluxo Completo (Mar 31, 2026)
-- [ ] Auditar Home.tsx: CTAs corretos, plano passado via query param
-- [ ] Auditar CriarConta.tsx: 3 steps sem campo GHL, submit correto, redirect ao Stripe
-- [ ] Auditar GhlOnboarding.tsx: formulário aparece com paid=true, submit cria sub-conta GHL
-- [ ] Auditar ghl.ts createGhlLocation: payload correto com companyId, timezone, país
-- [ ] Auditar triggerProvisioning: usa GHL_API_KEY e GHL_COMPANY_ID do ambiente
-- [ ] Corrigir todos os problemas encontrados na auditoria
-- [ ] Adicionar botão "Acessar minha conta" que redireciona para getsales4now.com após criação
-- [ ] Garantir que o fluxo completo funciona sem erros do início ao fim
+- [x] Auditar Home.tsx: CTAs corretos, plano passado via query param
+- [x] Auditar CriarConta.tsx: 3 steps sem campo GHL, submit correto, redirect ao Stripe
+- [x] Auditar GhlOnboarding.tsx: formulário aparece com paid=true, submit cria sub-conta GHL
+- [x] Auditar ghl.ts createGhlLocation: payload correto com companyId, timezone, país
+- [x] Auditar triggerProvisioning: usa GHL_API_KEY e GHL_COMPANY_ID do ambiente
+- [x] Corrigir todos os problemas encontrados na auditoria
+- [x] Adicionar botão "Acessar minha conta" que redireciona para getsales4now.com após criação
+- [x] Garantir que o fluxo completo funciona sem erros do início ao fim
 
 ## Correções Fluxo End-to-End (31/03/2026)
 - [x] Corrigir GhlOnboarding.tsx — import useAuth do caminho correto (@/_core/hooks/useAuth)
