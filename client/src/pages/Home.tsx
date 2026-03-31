@@ -100,22 +100,8 @@ export default function Home() {
     );
   }
 
-  // Authenticated: redirect to dashboard
-  if (isAuthenticated) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#020817]">
-        <div className="text-center space-y-4">
-          <img src={LOGO_URL} alt="GetSales4Now" className="w-16 h-16 rounded-xl mx-auto" />
-          <p className="text-white/50">Redirecionando para o dashboard...</p>
-          <Link href="/dashboard">
-            <Button className="bg-gradient-to-r from-orange-500 to-red-600 text-white border-0 gap-2">
-              Ir para o Dashboard <ArrowRight className="w-4 h-4" />
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Nota: usuários autenticados veem a landing page normalmente.
+  // Não redirecionamos automaticamente para não bloquear o fluxo pós-pagamento.
 
   return (
     <div className="min-h-screen bg-[#020817] text-white overflow-x-hidden">

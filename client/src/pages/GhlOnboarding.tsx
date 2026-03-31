@@ -1,21 +1,23 @@
 /**
  * GetSales4Now — Formulário de Criação de Sub-Conta
  *
- * Tela pós-pagamento: formulário único e direto onde o cliente
- * preenche os dados da empresa e a sub-conta GHL é criada automaticamente.
+ * Tela pós-pagamento: formulário único onde o cliente preenche
+ * os dados da empresa e a sub-conta GHL é criada automaticamente
+ * dentro da plataforma SaaS app.getsales4now.com
  *
- * Fluxo:
- *  1. Tela de boas-vindas com badge "Pagamento confirmado"
- *  2. Formulário único com todos os dados da empresa
- *  3. Tela de loading enquanto cria a sub-conta
- *  4. Tela de sucesso com confetti
+ * Correções aplicadas:
+ *  1. Verifica autenticação — redireciona para /login se não logado
+ *  2. Aguarda assinatura ser processada pelo webhook Stripe (retry com polling)
+ *  3. Botão de sucesso redireciona para app.getsales4now.com (painel SaaS)
+ *  4. Mensagens de erro claras e recuperáveis
  */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,21 +25,25 @@ import { Label } from "@/components/ui/label";
 import {
   Building2, Phone, Mail, MapPin, Globe,
   CheckCircle2, Rocket, Loader2, ArrowRight,
-  Briefcase, Target, Zap, Check,
+  Briefcase, Target, Zap, Check, Lock,
+  ExternalLink,
 } from "lucide-react";
+
+// ─── URL do painel SaaS GHL ───────────────────────────────────────────────────
+const GHL_SAAS_URL = "https://app.getsales4now.com";
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
 function Confetti() {
-  const pieces = Array.from({ length: 40 }).map((_, i) => ({
+  const pieces = Array.from({ length: 50 }).map((_, i) => ({
     left: `${(i * 7.3) % 100}%`,
     top: `${(i * 13.7) % 80}%`,
     background: ["#f97316", "#ef4444", "#22c55e", "#3b82f6", "#a855f7", "#eab308", "#06b6d4"][i % 7],
-    animationDelay: `${(i * 0.07) % 1}s`,
-    animationDuration: `${0.7 + (i * 0.09) % 0.8}s`,
+    animationDelay: `${(i * 0.07) % 1.2}s`,
+    animationDuration: `${0.8 + (i * 0.09) % 1}s`,
     transform: `rotate(${(i * 47) % 360}deg)`,
-    width: i % 3 === 0 ? "10px" : "6px",
-    height: i % 3 === 0 ? "10px" : "6px",
-    borderRadius: i % 2 === 0 ? "2px" : "50%",
+    width: i % 3 === 0 ? "12px" : "7px",
+    height: i % 3 === 0 ? "12px" : "7px",
+    borderRadius: i % 2 === 0 ? "3px" : "50%",
   }));
   return (
     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
@@ -78,26 +84,49 @@ const COUNTRIES = [
   { code: "CA", name: "Canadá" },
 ];
 
+const TIMEZONE_BY_COUNTRY: Record<string, string> = {
+  BR: "America/Sao_Paulo",
+  US: "America/New_York",
+  MX: "America/Mexico_City",
+  CO: "America/Bogota",
+  AR: "America/Argentina/Buenos_Aires",
+  CL: "America/Santiago",
+  PE: "America/Lima",
+  PT: "Europe/Lisbon",
+  ES: "Europe/Madrid",
+  PA: "America/Panama",
+  CA: "America/Toronto",
+};
+
 const formSchema = z.object({
   companyName: z.string().min(2, "Informe o nome da empresa"),
   companyEmail: z.string().email("E-mail inválido"),
-  companyPhone: z.string().min(8, "Informe o telefone"),
+  companyPhone: z.string().min(8, "Informe o telefone com DDD"),
   companyWebsite: z.string().optional(),
   country: z.string().min(2, "Selecione o país"),
   state: z.string().optional(),
   city: z.string().optional(),
-  businessType: z.string().min(1, "Selecione o segmento"),
+  businessType: z.string().min(1, "Selecione o segmento do negócio"),
 });
 type FormData = z.infer<typeof formSchema>;
 
 // ─── Tela de loading ──────────────────────────────────────────────────────────
 function CreatingScreen() {
+  const [currentStep, setCurrentStep] = useState(0);
   const steps = [
-    "Validando dados da empresa",
-    "Criando sub-conta na plataforma",
-    "Configurando usuário administrador",
-    "Finalizando configurações",
+    "Validando dados da empresa...",
+    "Criando sub-conta na plataforma GetSales4Now...",
+    "Configurando usuário administrador...",
+    "Finalizando configurações...",
   ];
+
+  useEffect(() => {
+    const timers = steps.map((_, i) =>
+      setTimeout(() => setCurrentStep(i), i * 2500)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center px-4">
       <div className="text-center max-w-md w-full">
@@ -108,9 +137,24 @@ function CreatingScreen() {
         <p className="text-white/50 text-sm mb-8">Isso pode levar alguns segundos. Não feche esta página.</p>
         <div className="space-y-3">
           {steps.map((s, i) => (
-            <div key={s} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3 border border-white/10">
-              <Loader2 className="w-4 h-4 text-orange-400 animate-spin shrink-0" style={{ animationDelay: `${i * 0.3}s` }} />
-              <span className="text-white/60 text-sm text-left">{s}</span>
+            <div
+              key={s}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-500 ${
+                i < currentStep
+                  ? "bg-green-500/10 border-green-500/30"
+                  : i === currentStep
+                  ? "bg-orange-500/10 border-orange-500/30"
+                  : "bg-white/5 border-white/10 opacity-40"
+              }`}
+            >
+              {i < currentStep ? (
+                <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+              ) : i === currentStep ? (
+                <Loader2 className="w-4 h-4 text-orange-400 animate-spin shrink-0" />
+              ) : (
+                <div className="w-4 h-4 rounded-full border border-white/20 shrink-0" />
+              )}
+              <span className={`text-sm text-left ${i <= currentStep ? "text-white/80" : "text-white/30"}`}>{s}</span>
             </div>
           ))}
         </div>
@@ -120,12 +164,17 @@ function CreatingScreen() {
 }
 
 // ─── Tela de sucesso ──────────────────────────────────────────────────────────
-function SuccessScreen({ companyName, onGo }: { companyName?: string; onGo: () => void }) {
+function SuccessScreen({ companyName, locationId }: { companyName?: string; locationId?: string }) {
+  const handleGoToPanel = () => {
+    // Redirecionar para o painel SaaS da plataforma getsales4now.com
+    window.location.href = GHL_SAAS_URL;
+  };
+
   return (
     <>
       <Confetti />
       <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center px-4">
-        <div className="text-center max-w-md w-full">
+        <div className="text-center max-w-lg w-full">
           <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-500/30">
             <Check className="w-12 h-12 text-white" />
           </div>
@@ -138,8 +187,10 @@ function SuccessScreen({ companyName, onGo }: { companyName?: string; onGo: () =
             )}
           </p>
           <p className="text-white/40 text-sm mb-8">
-            Acesse o dashboard para configurar seus canais, campanhas e automações.
+            Acesse o painel da plataforma para configurar seus canais, campanhas e automações.
           </p>
+
+          {/* Próximos passos */}
           <div className="grid grid-cols-3 gap-3 mb-8">
             {[
               { icon: "📱", label: "WhatsApp", desc: "Conecte agora" },
@@ -153,15 +204,47 @@ function SuccessScreen({ companyName, onGo }: { companyName?: string; onGo: () =
               </div>
             ))}
           </div>
+
+          {/* Botão principal — vai para app.getsales4now.com */}
           <Button
-            onClick={onGo}
-            className="w-full h-12 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl text-base"
+            onClick={handleGoToPanel}
+            className="w-full h-14 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl text-lg shadow-2xl shadow-orange-500/30 mb-3"
           >
-            Ir para o Dashboard <ArrowRight className="w-5 h-5 ml-2" />
+            <ExternalLink className="w-5 h-5 mr-2" />
+            Acessar minha conta em GetSales4Now
           </Button>
+
+          <p className="text-white/30 text-xs">
+            Você será redirecionado para <span className="text-orange-400">app.getsales4now.com</span>
+            {locationId && <> — ID da conta: <span className="font-mono">{locationId}</span></>}
+          </p>
         </div>
       </div>
     </>
+  );
+}
+
+// ─── Tela de aguardando pagamento ─────────────────────────────────────────────
+function WaitingPaymentScreen({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center px-4">
+      <div className="text-center max-w-md w-full">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-500 to-orange-600 flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-yellow-500/30 animate-pulse">
+          <Loader2 className="w-10 h-10 text-white animate-spin" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">Confirmando pagamento...</h2>
+        <p className="text-white/50 text-sm mb-6">
+          Estamos aguardando a confirmação do seu pagamento. Isso pode levar alguns instantes.
+        </p>
+        <Button
+          onClick={onRetry}
+          variant="outline"
+          className="border-white/20 text-white/70 hover:text-white hover:border-white/40"
+        >
+          Verificar novamente
+        </Button>
+      </div>
+    </div>
   );
 }
 
@@ -174,9 +257,27 @@ export default function GhlOnboarding() {
   const params = new URLSearchParams(search);
   const isPaid = params.get("paid") === "true";
 
+  const { user, loading: authLoading } = useAuth();
   const [isCreating, setIsCreating] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [companyName, setCompanyName] = useState("");
+  const [locationId, setLocationId] = useState<string | undefined>();
+  const [checkingSubscription, setCheckingSubscription] = useState(false);
+
+  // Verificar status da assinatura (polling para aguardar webhook Stripe)
+  const subscriptionStatus = trpc.ghlProvisioning.getStatus.useQuery(undefined, {
+    enabled: !!user,
+    refetchInterval: isSuccess ? false : 5000, // Polling a cada 5s
+  });
+
+  // Redirecionar para login se não autenticado
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Faça login para continuar a configuração da sua conta.");
+      const returnTo = encodeURIComponent("/ghl-onboarding" + (isPaid ? "?paid=true" : ""));
+      navigate(`/login?returnTo=${returnTo}`);
+    }
+  }, [user, authLoading, navigate, isPaid]);
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -184,25 +285,33 @@ export default function GhlOnboarding() {
   });
 
   const selectedBusinessType = watch("businessType");
+  const selectedCountry = watch("country");
 
   const updateMutation = trpc.authOwn.updateGhlOnboarding.useMutation();
   const provisionMutation = trpc.ghlProvisioning.triggerProvisioning.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       setIsCreating(false);
+      setLocationId(data.locationId);
       setIsSuccess(true);
     },
-    onError: (err: { message?: string }) => {
+    onError: (err) => {
       setIsCreating(false);
-      toast.error(err.message || "Erro ao criar sub-conta. Tente novamente em Configurações.");
-      navigate("/dashboard");
+      const msg = err.message || "Erro ao criar sub-conta.";
+      if (msg.includes("assinatura") || msg.includes("plano") || msg.includes("FORBIDDEN")) {
+        toast.error("Aguardando confirmação do pagamento. Tente novamente em alguns instantes.");
+        setCheckingSubscription(true);
+      } else {
+        toast.error(msg + " Tente novamente ou entre em contato com o suporte.");
+      }
     },
   });
 
   const onSubmit = async (data: FormData) => {
     setCompanyName(data.companyName);
     setIsCreating(true);
+    setCheckingSubscription(false);
 
-    // Salvar dados no perfil do usuário
+    // Salvar dados no perfil
     try {
       await updateMutation.mutateAsync({
         step: 1,
@@ -218,7 +327,7 @@ export default function GhlOnboarding() {
         completed: true,
       });
     } catch {
-      // Continua mesmo se falhar o update
+      // Continua mesmo se falhar o update de perfil
     }
 
     // Criar sub-conta GHL usando a chave da agência
@@ -227,15 +336,29 @@ export default function GhlOnboarding() {
       businessEmail: data.companyEmail,
       businessPhone: data.companyPhone,
       country: data.country,
-      timezone: data.country === "BR" ? "America/Sao_Paulo" : "America/New_York",
+      timezone: TIMEZONE_BY_COUNTRY[data.country] ?? "America/Sao_Paulo",
     });
   };
 
-  // Tela de loading
-  if (isCreating) return <CreatingScreen />;
+  // Estados de carregamento
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#0a0f1e] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
+      </div>
+    );
+  }
 
-  // Tela de sucesso
-  if (isSuccess) return <SuccessScreen companyName={companyName} onGo={() => navigate("/dashboard")} />;
+  if (!user) return null; // Será redirecionado pelo useEffect
+
+  if (isCreating) return <CreatingScreen />;
+  if (isSuccess) return <SuccessScreen companyName={companyName} locationId={locationId} />;
+  if (checkingSubscription) return (
+    <WaitingPaymentScreen onRetry={() => {
+      setCheckingSubscription(false);
+      subscriptionStatus.refetch();
+    }} />
+  );
 
   // ─── Formulário principal ────────────────────────────────────────────────────
   return (
@@ -248,11 +371,16 @@ export default function GhlOnboarding() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">GS</div>
             <span className="text-white font-bold text-xl">GetSales4Now</span>
           </div>
-          {isPaid && (
-            <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5 text-green-400 text-xs font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" /> Pagamento confirmado
+          <div className="flex items-center gap-2">
+            {isPaid && (
+              <div className="flex items-center gap-1.5 bg-green-500/10 border border-green-500/30 rounded-full px-3 py-1.5 text-green-400 text-xs font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Pagamento confirmado
+              </div>
+            )}
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 rounded-full px-3 py-1.5 text-white/50 text-xs">
+              <Lock className="w-3 h-3" /> Conexão segura
             </div>
-          )}
+          </div>
         </div>
 
         {/* Título */}
@@ -263,10 +391,10 @@ export default function GhlOnboarding() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Configure sua conta</h1>
-              <p className="text-white/50 text-sm">Preencha os dados da sua empresa para criar sua sub-conta</p>
+              <p className="text-white/50 text-sm">Preencha os dados e sua sub-conta será criada automaticamente</p>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-4">
+          <div className="flex items-center gap-4 mt-4 flex-wrap">
             {[
               { icon: Building2, label: "Dados da empresa" },
               { icon: MapPin, label: "Localização" },
@@ -301,7 +429,9 @@ export default function GhlOnboarding() {
                 {errors.companyName && <p className="text-red-400 text-xs">{errors.companyName.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-sm flex items-center gap-1.5"><Mail className="w-3.5 h-3.5" /> E-mail comercial *</Label>
+                <Label className="text-white/60 text-sm flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" /> E-mail comercial *
+                </Label>
                 <Input
                   {...register("companyEmail")}
                   type="email"
@@ -311,7 +441,9 @@ export default function GhlOnboarding() {
                 {errors.companyEmail && <p className="text-red-400 text-xs">{errors.companyEmail.message}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label className="text-white/60 text-sm flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> Telefone / WhatsApp *</Label>
+                <Label className="text-white/60 text-sm flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5" /> Telefone / WhatsApp *
+                </Label>
                 <Input
                   {...register("companyPhone")}
                   placeholder="+55 11 99999-9999"
@@ -320,7 +452,9 @@ export default function GhlOnboarding() {
                 {errors.companyPhone && <p className="text-red-400 text-xs">{errors.companyPhone.message}</p>}
               </div>
               <div className="md:col-span-2 space-y-1.5">
-                <Label className="text-white/60 text-sm flex items-center gap-1.5"><Globe className="w-3.5 h-3.5" /> Site <span className="text-white/30 text-xs">(opcional)</span></Label>
+                <Label className="text-white/60 text-sm flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" /> Site <span className="text-white/30 text-xs">(opcional)</span>
+                </Label>
                 <Input
                   {...register("companyWebsite")}
                   placeholder="https://suaempresa.com.br"
@@ -353,7 +487,7 @@ export default function GhlOnboarding() {
                 <Label className="text-white/60 text-sm">Estado / Província</Label>
                 <Input
                   {...register("state")}
-                  placeholder="Ex: São Paulo"
+                  placeholder={selectedCountry === "BR" ? "Ex: São Paulo" : "Ex: California"}
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-orange-500 h-11"
                 />
               </div>
@@ -361,7 +495,7 @@ export default function GhlOnboarding() {
                 <Label className="text-white/60 text-sm">Cidade</Label>
                 <Input
                   {...register("city")}
-                  placeholder="Ex: São Paulo"
+                  placeholder={selectedCountry === "BR" ? "Ex: São Paulo" : "Ex: Los Angeles"}
                   className="bg-white/5 border-white/10 text-white placeholder:text-white/25 focus:border-orange-500 h-11"
                 />
               </div>
@@ -404,9 +538,9 @@ export default function GhlOnboarding() {
             <div>
               <p className="text-orange-300 text-sm font-semibold mb-1">O que acontece ao criar a conta:</p>
               <ul className="text-orange-200/70 text-xs space-y-1">
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" /> Criamos sua sub-conta no GoHighLevel automaticamente</li>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" /> Criamos sua sub-conta em <strong>app.getsales4now.com</strong> automaticamente</li>
                 <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" /> Configuramos seu acesso de administrador</li>
-                <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" /> Você é redirecionado para o dashboard pronto para usar</li>
+                <li className="flex items-center gap-1.5"><Check className="w-3 h-3 text-green-400" /> Você é redirecionado para o painel pronto para usar</li>
               </ul>
             </div>
           </div>
@@ -414,18 +548,31 @@ export default function GhlOnboarding() {
           {/* Botão de submit */}
           <Button
             type="submit"
-            disabled={isCreating}
+            disabled={isCreating || provisionMutation.isPending}
             className="w-full h-14 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold rounded-xl text-lg shadow-2xl shadow-orange-500/30"
           >
-            {isCreating ? (
-              <span className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Criando sua conta...</span>
+            {isCreating || provisionMutation.isPending ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin" /> Criando sua conta...
+              </span>
             ) : (
-              <span className="flex items-center gap-2"><Rocket className="w-5 h-5" /> Criar Minha Conta GetSales4Now</span>
+              <span className="flex items-center gap-2">
+                <Rocket className="w-5 h-5" /> Criar Minha Conta GetSales4Now
+                <ArrowRight className="w-5 h-5" />
+              </span>
             )}
           </Button>
 
           <p className="text-center text-white/30 text-xs pb-4">
-            Ao criar sua conta, você concorda com os Termos de Uso e a Política de Privacidade do GetSales4Now.
+            Ao criar sua conta, você concorda com os{" "}
+            <a href="https://getsales4now.com/termos" target="_blank" rel="noreferrer" className="text-orange-400/70 hover:text-orange-400 underline">
+              Termos de Uso
+            </a>{" "}
+            e a{" "}
+            <a href="https://getsales4now.com/privacidade" target="_blank" rel="noreferrer" className="text-orange-400/70 hover:text-orange-400 underline">
+              Política de Privacidade
+            </a>{" "}
+            do GetSales4Now.
           </p>
         </form>
       </div>

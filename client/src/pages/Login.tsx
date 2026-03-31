@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,8 @@ type ForgotForm = z.infer<typeof forgotSchema>;
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Login() {
   const [, navigate] = useLocation();
+  const search = useSearch();
+  const returnTo = new URLSearchParams(search).get("returnTo");
   const [showPassword, setShowPassword] = useState(false);
   const [mode, setMode] = useState<"login" | "forgot" | "forgot-sent">("login");
 
@@ -45,7 +47,10 @@ export default function Login() {
   const loginMutation = trpc.authOwn.login.useMutation({
     onSuccess: (data) => {
       toast.success(`Welcome back, ${data.name}!`);
-      if (data.needsGhlOnboarding) {
+      // Se há returnTo na URL (ex: vindo de /ghl-onboarding?paid=true), usar ele
+      if (returnTo) {
+        navigate(decodeURIComponent(returnTo));
+      } else if (data.needsGhlOnboarding) {
         navigate("/ghl-onboarding");
       } else if (data.needsCheckout) {
         navigate("/checkout?plan=" + data.plan + "&trial=true");

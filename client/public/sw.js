@@ -1,6 +1,6 @@
-const CACHE_NAME = 'getsales4now-v1';
+// Versão v3 — não faz cache de JS/TS/HTML para evitar problemas com Vite HMR
+const CACHE_NAME = 'getsales4now-v3';
 const STATIC_ASSETS = [
-  '/',
   '/manifest.json',
 ];
 
@@ -21,9 +21,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET and API requests
-  if (event.request.method !== 'GET' || event.request.url.includes('/api/')) {
-    return;
+  const url = new URL(event.request.url);
+
+  // Nunca fazer cache de: API, arquivos JS/TS (Vite HMR), HTML, raiz
+  if (
+    event.request.method !== 'GET' ||
+    url.pathname.includes('/api/') ||
+    url.pathname.includes('/@') ||
+    url.pathname.includes('/src/') ||
+    url.pathname.endsWith('.ts') ||
+    url.pathname.endsWith('.tsx') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.html') ||
+    url.pathname === '/'
+  ) {
+    return; // Deixa o browser buscar normalmente
   }
 
   event.respondWith(
@@ -36,7 +48,7 @@ self.addEventListener('fetch', (event) => {
         const responseToCache = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         return response;
-      }).catch(() => caches.match('/'));
+      }).catch(() => new Response('', { status: 404 }));
     })
   );
 });

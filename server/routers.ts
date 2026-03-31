@@ -1188,9 +1188,60 @@ const ghlProvisioningRouter = router({
       if (!isValid) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Token da agência inválido. Entre em contato com o suporte." });
 
       // Verificar assinatura
-      const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
-      if (!sub) throw new TRPCError({ code: "FORBIDDEN", message: "Nenhuma assinatura ativa encontrada." });
-      if (sub.plan === "free") throw new TRPCError({ code: "FORBIDDEN", message: "A criação de conta GHL requer um plano pago." });
+      // NOTA: O webhook do Stripe pode demorar alguns segundos após o redirect.
+      // Se não há assinatura ou o plano ainda é "free", verificamos via Stripe API diretamente.
+      let [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+
+      if (!sub || sub.plan === "free") {
+        // Tentar buscar a sessão de checkout mais recente do Stripe para este usuário
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
+          const sessions = await stripe.checkout.sessions.list({
+            limit: 5,
+          });
+          // Procurar sessão com este user_id nos metadados
+          const userSession = sessions.data.find(
+            (s) => s.metadata?.user_id === ctx.user.id.toString() && s.payment_status === "paid"
+          );
+          if (userSession) {
+            const plan = (userSession.metadata?.plan ?? "starter") as PlanType;
+            const limits = PLAN_LIMITS[plan];
+            const stripeCustomerId = userSession.customer as string;
+            const stripeSubscriptionId = userSession.subscription as string;
+            if (!sub) {
+              // Criar assinatura no banco se não existe
+              await db.insert(subscriptions).values({
+                userId: ctx.user.id,
+                plan,
+                status: "active",
+                stripeCustomerId,
+                stripeSubscriptionId,
+                contactsLimit: limits.contacts,
+                usersLimit: limits.users,
+                ghlStatus: "pending",
+              });
+            } else {
+              // Atualizar plano se ainda é free
+              await db.update(subscriptions).set({
+                plan,
+                status: "active",
+                stripeCustomerId,
+                stripeSubscriptionId,
+                contactsLimit: limits.contacts,
+                usersLimit: limits.users,
+                ghlStatus: "pending",
+              }).where(eq(subscriptions.userId, ctx.user.id));
+            }
+            // Recarregar assinatura
+            [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
+          }
+        } catch (stripeErr) {
+          console.error("[GHL Provisioning] Erro ao verificar Stripe:", stripeErr);
+        }
+      }
+
+      if (!sub) throw new TRPCError({ code: "FORBIDDEN", message: "Nenhuma assinatura encontrada. Verifique se o pagamento foi processado e tente novamente em alguns instantes." });
+      if (sub.plan === "free") throw new TRPCError({ code: "FORBIDDEN", message: "Pagamento ainda sendo processado. Aguarde alguns instantes e tente novamente." });
 
       // Registrar início
       await db.insert(ghlProvisioningLogs).values({

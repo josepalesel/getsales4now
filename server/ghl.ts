@@ -173,13 +173,20 @@ export async function createGhlLocation(input: CreateLocationInput): Promise<Ghl
     },
   };
 
-  const response = await ghlRequest<{ location: GhlLocation }>("/locations/", {
+  const response = await ghlRequest<Record<string, unknown>>("/locations/", {
     method: "POST",
     body: payload,
     token,
   });
 
-  return response.location;
+  console.log("[GHL] createGhlLocation raw response:", JSON.stringify(response).substring(0, 500));
+
+  // A API GHL pode retornar { location: {...} } ou diretamente { id: ..., name: ... }
+  const location = (response.location as GhlLocation) ?? (response.id ? (response as unknown as GhlLocation) : undefined);
+  if (!location?.id) {
+    throw new Error(`GHL provisioning failed: unexpected response format. Response: ${JSON.stringify(response).substring(0, 300)}`);
+  }
+  return location;
 }
 
 // ─── Contacts ─────────────────────────────────────────────────────────────────

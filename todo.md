@@ -303,3 +303,31 @@
 - [x] Configurar GHL_COMPANY_ID como secret seguro no servidor
 - [x] Testar criação de sub-conta via API: criada com sucesso dentro de getsales4now.com
 - [x] Sub-conta de teste deletada após validação
+
+## Checkup Ponta a Ponta — Fluxo Completo (Mar 31, 2026)
+- [ ] Auditar Home.tsx: CTAs corretos, plano passado via query param
+- [ ] Auditar CriarConta.tsx: 3 steps sem campo GHL, submit correto, redirect ao Stripe
+- [ ] Auditar GhlOnboarding.tsx: formulário aparece com paid=true, submit cria sub-conta GHL
+- [ ] Auditar ghl.ts createGhlLocation: payload correto com companyId, timezone, país
+- [ ] Auditar triggerProvisioning: usa GHL_API_KEY e GHL_COMPANY_ID do ambiente
+- [ ] Corrigir todos os problemas encontrados na auditoria
+- [ ] Adicionar botão "Acessar minha conta" que redireciona para getsales4now.com após criação
+- [ ] Garantir que o fluxo completo funciona sem erros do início ao fim
+
+## Correções Fluxo End-to-End (31/03/2026)
+- [x] Corrigir GhlOnboarding.tsx — import useAuth do caminho correto (@/_core/hooks/useAuth)
+- [x] Corrigir Service Worker (sw.js) para não cachear arquivos JS em desenvolvimento
+- [x] Corrigir triggerProvisioning — verificação de assinatura via Stripe API quando webhook atrasado
+- [x] Corrigir createGhlLocation — parsing de resposta da API GHL (retorna objeto direto)
+- [x] Corrigir Login.tsx — respeitar parâmetro returnTo na URL (redirect pós-login)
+- [x] Corrigir GhlOnboarding.tsx — encode correto do returnTo com encodeURIComponent
+- [x] Validar fluxo completo: CriarConta → Stripe → GhlOnboarding → GHL provisioning → app.getsales4now.com
+
+## Correções Fluxo End-to-End (31/03/2026)
+- [x] Corrigir GhlOnboarding.tsx — import useAuth do caminho correto
+- [x] Corrigir Service Worker (sw.js) para não cachear arquivos JS em dev
+- [x] Corrigir triggerProvisioning — verificação via Stripe API quando webhook atrasado
+- [x] Corrigir createGhlLocation — parsing correto da resposta da API GHL
+- [x] Corrigir Login.tsx — respeitar parâmetro returnTo na URL
+- [x] Corrigir GhlOnboarding.tsx — encode correto do returnTo
+- [x] Validar fluxo: CriarConta -> Stripe -> GhlOnboarding -> GHL -> app.getsales4now.com
