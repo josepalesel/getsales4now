@@ -1271,11 +1271,17 @@ const ghlProvisioningRouter = router({
         });
 
         // Criar usuário admin na nova sub-conta
+        const fullName = ctx.user.name ?? input.businessName ?? "Admin";
+        const nameParts = fullName.trim().split(" ");
+        const firstName = nameParts[0] ?? "Admin";
+        const lastName = nameParts.slice(1).join(" ") || firstName;
         await createGhlLocationUser({
           locationId: location.id,
-          name: ctx.user.name ?? input.businessName,
+          firstName,
+          lastName,
           email: input.businessEmail,
           role: "admin",
+          companyId: ghlCompanyId,
           token: agencyToken,
         });
 

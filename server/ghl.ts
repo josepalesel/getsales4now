@@ -131,10 +131,12 @@ export interface CreateLocationInput {
 
 export interface CreateLocationUserInput {
   locationId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   role?: "admin" | "user";
+  companyId: string;
   token?: string;
 }
 
@@ -315,12 +317,13 @@ export async function sendGhlMessage(conversationId: string, data: {
  * Creates a user in a GHL sub-account (Location)
  */
 export async function createGhlLocationUser(input: CreateLocationUserInput): Promise<GhlUser> {
-  const { locationId, token, ...userData } = input;
+  const { locationId, token, companyId, ...userData } = input;
 
   const response = await ghlRequest<{ user: GhlUser }>("/users/", {
     method: "POST",
     body: {
       ...userData,
+      companyId,
       locationIds: [locationId],
       type: "account",
       role: userData.role ?? "admin",
