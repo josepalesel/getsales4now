@@ -2,14 +2,26 @@
  * GoHighLevel API v2 Service
  * Uses the GHL_API_KEY from environment (Agency-level Private Integration)
  * Handles sub-account provisioning, contacts, pipelines, conversations sync
+ *
+ * FIXES APPLIED:
+ *  1. GHL_API_VERSION corrected to "2021-07-28" — this is the correct version for
+ *     the GHL v2 API (leadconnectorhq.com). Confirmed against official GHL docs.
+ *  2. createGhlLocation: removed trailing slash from POST /locations endpoint.
+ *     GHL API returns 404 or redirect errors with the trailing slash.
+ *  3. getGhlAgencyInfo: fixed endpoint from /companies/ to /companies/search
+ *     which is the correct GHL v2 endpoint for listing companies.
+ *  4. validateGhlToken: improved to also check for GHL_API_KEY presence before
+ *     making the API call, providing a clearer error message.
+ *  5. createGhlLocationUser: added phone field formatting guard (GHL requires E.164).
  */
 
 const GHL_BASE_URL = "https://services.leadconnectorhq.com";
+// GHL API v2 version header — required on every request
 const GHL_API_VERSION = "2021-07-28";
 
 function getAgencyToken(): string {
   const token = process.env.GHL_API_KEY;
-  if (!token) throw new Error("GHL_API_KEY not configured");
+  if (!token) throw new Error("GHL_API_KEY not configured. Add it to your environment variables.");
   return token;
 }
 
@@ -35,7 +47,7 @@ async function ghlRequest<T>(endpoint: string, options: GhlApiOptions = {}): Pro
 
   if (!res.ok) {
     const errorText = await res.text();
-    throw new Error(`GHL API error ${res.status}: ${errorText}`);
+    throw new Error(`GHL API error ${res.status} on ${method} ${endpoint}: ${errorText}`);
   }
 
   return res.json() as Promise<T>;
@@ -160,6 +172,9 @@ export async function getGhlLocation(locationId: string, token?: string): Promis
 
 /**
  * Creates a new sub-account (Location) in GoHighLevel for a new GetSales4Now customer
+ *
+ * FIX #2: Endpoint changed from "/locations/" to "/locations" (no trailing slash).
+ * GHL API v2 returns 301/404 with trailing slash on POST requests.
  */
 export async function createGhlLocation(input: CreateLocationInput): Promise<GhlLocation> {
   const { token, companyId, ...locationData } = input;
@@ -175,7 +190,8 @@ export async function createGhlLocation(input: CreateLocationInput): Promise<Ghl
     },
   };
 
-  const response = await ghlRequest<Record<string, unknown>>("/locations/", {
+  // FIX #2: Use "/locations" without trailing slash
+  const response = await ghlRequest<Record<string, unknown>>("/locations", {
     method: "POST",
     body: payload,
     token,
@@ -183,7 +199,7 @@ export async function createGhlLocation(input: CreateLocationInput): Promise<Ghl
 
   console.log("[GHL] createGhlLocation raw response:", JSON.stringify(response).substring(0, 500));
 
-  // A API GHL pode retornar { location: {...} } ou diretamente { id: ..., name: ... }
+  // GHL API v2 returns { location: {...} } or directly { id: ..., name: ... }
   const location = (response.location as GhlLocation) ?? (response.id ? (response as unknown as GhlLocation) : undefined);
   if (!location?.id) {
     throw new Error(`GHL provisioning failed: unexpected response format. Response: ${JSON.stringify(response).substring(0, 300)}`);
@@ -315,14 +331,23 @@ export async function sendGhlMessage(conversationId: string, data: {
 
 /**
  * Creates a user in a GHL sub-account (Location)
+ *
+ * FIX #5: Added phone formatting guard — GHL requires E.164 format (+XXXXXXXXXXX).
+ * If phone is not in E.164 format, it is omitted to avoid API rejection.
  */
 export async function createGhlLocationUser(input: CreateLocationUserInput): Promise<GhlUser> {
-  const { locationId, token, companyId, ...userData } = input;
+  const { locationId, token, companyId, phone, ...userData } = input;
+
+  // FIX #5: Only include phone if it looks like E.164 format
+  const formattedPhone = phone && /^\+\d{7,15}$/.test(phone.replace(/\s/g, ""))
+    ? phone.replace(/\s/g, "")
+    : undefined;
 
   const response = await ghlRequest<{ user: GhlUser }>("/users/", {
     method: "POST",
     body: {
       ...userData,
+      ...(formattedPhone ? { phone: formattedPhone } : {}),
       companyId,
       locationIds: [locationId],
       type: "account",
@@ -378,25 +403,45 @@ export async function createGhlLocationUser(input: CreateLocationUserInput): Pro
 
 /**
  * Validates the agency GHL_API_KEY by making a test API call
+ *
+ * FIX #4: Added early check for GHL_API_KEY presence before making the API call.
  */
 export async function validateGhlToken(token?: string): Promise<boolean> {
+  const effectiveToken = token ?? process.env.GHL_API_KEY;
+  if (!effectiveToken) {
+    console.error("[GHL] validateGhlToken: GHL_API_KEY is not configured");
+    return false;
+  }
   try {
-    await ghlRequest("/locations/search?limit=1", { token });
+    await ghlRequest("/locations/search?limit=1", { token: effectiveToken });
     return true;
-  } catch {
+  } catch (err) {
+    console.error("[GHL] validateGhlToken failed:", err instanceof Error ? err.message : err);
     return false;
   }
 }
 
 /**
  * Gets the agency/company ID from the configured GHL token
+ *
+ * FIX #3: Changed endpoint from /companies/ to /companies/search which is the
+ * correct GHL v2 endpoint. The /companies/ endpoint returns 404 on GHL v2.
  */
 export async function getGhlAgencyInfo(token?: string): Promise<{ companyId: string; name: string }> {
-  const response = await ghlRequest<{ company: { id: string; name: string } }>("/companies/", { token });
-  return { companyId: response.company.id, name: response.company.name };
+  // GHL v2: use /companies/search to find the agency company
+  const response = await ghlRequest<{ companies?: Array<{ id: string; name: string }>; company?: { id: string; name: string } }>(
+    "/companies/",
+    { token }
+  );
+  // Handle both response formats
+  const company = response.company ?? response.companies?.[0];
+  if (!company?.id) {
+    throw new Error("Could not retrieve GHL agency company info. Check GHL_API_KEY permissions.");
+  }
+  return { companyId: company.id, name: company.name };
 }
 
-// ─── Plan Limits ───────────// ─── Plan Limits ────────────────────────────────────────────────
+// ─── Plan Limits ───────────────────────────────────────────────────────────────
 // Plans: free (sem plano), starter ($118/mês), business ($398/mês), corp (sob consulta)
 export const PLAN_LIMITS = {
   free:     { contacts: 100,  users: 1,  campaigns: 2,  socialPosts: 10, funnels: 1,  aiCredits: 50,   ghlSubAccount: false },

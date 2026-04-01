@@ -38,8 +38,15 @@ import {
   type PlanType,
 } from "./ghl";
 import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
+// FIX: Use a lazy getter so Stripe is not initialized at module load time.
+// This prevents test failures when STRIPE_SECRET_KEY is not set in the test environment.
+function getStripe() {
+  const key = process.env.STRIPE_SECRET_KEY ?? "";
+  if (!key) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "STRIPE_SECRET_KEY not configured" });
+  return new Stripe(key, { apiVersion: "2026-03-25.dahlia" });
+}
+// Keep a module-level instance for non-test environments
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-03-25.dahlia" }) : null;
 
 // Stripe Price IDs — Starter ($118/mo) and Business ($398/mo)
 const STRIPE_PRICES: Record<string, Record<string, string>> = {
@@ -1092,7 +1099,8 @@ const billingRouter = router({
     }))
     .mutation(async ({ ctx, input }) => {
       const priceId = STRIPE_PRICES[input.plan]?.[input.billing];
-      const origin = ctx.req.headers.origin as string ?? "https://getsales4now.agency";
+      // FIX: Use APP_URL env var or derive from request — origin header may be absent in server-side calls
+      const origin = (ctx.req.headers.origin as string) || process.env.APP_URL || "https://getsales4now.agency";
       // Real prices in cents
       const planPrices: Record<string, Record<string, number>> = {
         starter: { monthly: 11800, yearly: Math.round(118 * 12 * 0.8 * 100) },
@@ -1116,6 +1124,8 @@ const billingRouter = router({
           user_id: ctx.user.id.toString(),
           plan: input.plan,
           billing: input.billing,
+          // FIX: Include price_id in session metadata so webhook can read it directly
+          price_id: priceId ?? "",
           customer_email: ctx.user.email ?? "",
           customer_name: ctx.user.name ?? "",
         },
@@ -1139,7 +1149,7 @@ const billingRouter = router({
         ],
       };
 
-      const session = await stripe.checkout.sessions.create(sessionParams);
+      const session = await getStripe().checkout.sessions.create(sessionParams);
       return { url: session.url };
     }),
 
@@ -1148,7 +1158,7 @@ const billingRouter = router({
     if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
     const [sub] = await db.select().from(subscriptions).where(eq(subscriptions.userId, ctx.user.id)).limit(1);
     if (!sub?.stripeSubscriptionId) throw new TRPCError({ code: "NOT_FOUND", message: "No active subscription" });
-    await stripe.subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: true });
+    await getStripe().subscriptions.update(sub.stripeSubscriptionId, { cancel_at_period_end: true });
     await db.update(subscriptions).set({ status: "canceled", canceledAt: new Date() }).where(eq(subscriptions.userId, ctx.user.id));
     return { success: true };
   }),
@@ -1205,8 +1215,7 @@ const ghlProvisioningRouter = router({
         // (o webhook pode demorar alguns segundos após o redirect)
         let stripePaymentConfirmed = false;
         try {
-          const stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", { apiVersion: "2026-03-25.dahlia" });
-          const sessions = await stripeClient.checkout.sessions.list({ limit: 10 });
+          const sessions = await getStripe().checkout.sessions.list({ limit: 10 });
           // Procurar sessão com este user_id nos metadados E com pagamento confirmado
           const userSession = sessions.data.find(
             (s) => s.metadata?.user_id === ctx.user.id.toString() &&
