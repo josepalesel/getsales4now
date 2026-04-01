@@ -36,6 +36,13 @@
       "when": 1774813282182,
       "tag": "0004_swift_swordsman",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1743532800000,
+      "tag": "0005_fix_subscriptions_plan_enum",
+      "breakpoints": true
     }
   ]
 }

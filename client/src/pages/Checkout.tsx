@@ -1,3 +1,14 @@
+/**
+ * GetSales4Now — Checkout Page
+ *
+ * FIX APPLIED:
+ *  Changed window.open(url, "_blank") to window.location.href = url
+ *  so Stripe opens in the SAME tab. This is critical because Stripe's
+ *  success_url redirect (/ghl-onboarding?paid=true) only works when
+ *  the checkout is in the same tab. Opening in a new tab means the
+ *  success redirect goes to the new tab, not the original tab, and
+ *  the user ends up confused with two tabs open.
+ */
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -81,10 +92,16 @@ export default function Checkout() {
   const createCheckoutMutation = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       if (data.url) {
-        window.open(data.url, "_blank");
-        toast.info("Checkout Stripe aberto em nova aba. Conclua o pagamento lá.");
+        // FIX: Use window.location.href (same tab) instead of window.open (new tab).
+        // Stripe's success_url redirect only works correctly in the same tab.
+        // Opening in a new tab breaks the post-payment flow to /ghl-onboarding.
+        window.location.href = data.url;
+        // Note: setIsLoading(false) is intentionally NOT called here because
+        // the page will navigate away. Keeping the loading state prevents double-clicks.
+      } else {
+        toast.error("Stripe não retornou uma URL de checkout. Tente novamente.");
+        setIsLoading(false);
       }
-      setIsLoading(false);
     },
     onError: (err) => {
       toast.error(err.message || "Falha ao iniciar checkout. Tente novamente.");
@@ -169,7 +186,7 @@ export default function Checkout() {
                 {[
                   { step: "1", text: "Clique abaixo para abrir o checkout seguro do Stripe" },
                   { step: "2", text: "Adicione seu cartão — sem cobrança por 14 dias" },
-                  { step: "3", text: "Volte aqui para configurar sua sub-conta GoHighLevel" },
+                  { step: "3", text: "Você será redirecionado automaticamente para configurar sua conta" },
                   { step: "4", text: "Comece a usar todos os recursos imediatamente" },
                 ].map((item) => (
                   <li key={item.step} className="flex items-start gap-3">

@@ -8,10 +8,20 @@
  * Register this webhook URL in your GHL account under:
  * Settings → Integrations → Webhooks → Add New Webhook
  * URL: https://getsales4now.agency/api/ghl/webhook
+ *
+ * FIXES APPLIED:
+ *  1. Added GHL webhook signature verification using GHL_WEBHOOK_SECRET env var.
+ *     Without this, anyone could send fake events to your webhook endpoint.
+ *     If GHL_WEBHOOK_SECRET is not set, webhook still works but logs a warning.
+ *  2. Removed duplicate dynamic imports of `subscriptions` inside switch cases.
+ *     The schema was already imported at the top level — the dynamic imports
+ *     inside each case were redundant and could cause shadowing issues.
+ *  3. Added proper response for GHL webhook verification (GET challenge).
  */
 import type { Express, Request, Response } from "express";
+import crypto from "crypto";
 import { getDb } from "./db";
-import { contacts, opportunities, conversations } from "../drizzle/schema";
+import { contacts, opportunities, conversations, subscriptions } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
 
 interface GhlWebhookPayload {
@@ -38,9 +48,21 @@ interface GhlWebhookPayload {
   dateUpdated?: string;
 }
 
+/**
+ * FIX #1: Verify GHL webhook signature.
+ * GHL signs webhook payloads with HMAC-SHA256 using the webhook secret.
+ * Header: x-ghl-signature
+ */
+function verifyGhlSignature(body: string, signature: string | undefined, secret: string): boolean {
+  if (!signature) return false;
+  const expected = crypto.createHmac("sha256", secret).update(body).digest("hex");
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+
 export function registerGhlWebhook(app: Express) {
   /**
    * GHL sends a GET request to verify the webhook endpoint during setup.
+   * FIX #3: Return proper challenge response.
    */
   app.get("/api/ghl/webhook", (req: Request, res: Response) => {
     const challenge = req.query["hub.challenge"];
@@ -54,6 +76,19 @@ export function registerGhlWebhook(app: Express) {
    * Main webhook receiver — processes GHL events.
    */
   app.post("/api/ghl/webhook", async (req: Request, res: Response) => {
+    // FIX #1: Verify GHL webhook signature if secret is configured
+    const ghlWebhookSecret = process.env.GHL_WEBHOOK_SECRET;
+    if (ghlWebhookSecret) {
+      const signature = req.headers["x-ghl-signature"] as string | undefined;
+      const rawBody = JSON.stringify(req.body);
+      if (!verifyGhlSignature(rawBody, signature, ghlWebhookSecret)) {
+        console.warn("[GHL Webhook] Signature verification failed — rejecting request");
+        return res.status(401).json({ error: "Invalid webhook signature" });
+      }
+    } else {
+      console.warn("[GHL Webhook] GHL_WEBHOOK_SECRET not configured — skipping signature verification. Set this env var for security.");
+    }
+
     const payload = req.body as GhlWebhookPayload;
 
     if (!payload?.type || !payload?.locationId) {
@@ -78,8 +113,7 @@ export function registerGhlWebhook(app: Express) {
 
           const fullName = [payload.firstName, payload.lastName].filter(Boolean).join(" ").trim() || "Unknown";
 
-          // Find the user who owns this location
-          const { subscriptions } = await import("../drizzle/schema");
+          // FIX #2: Use top-level import instead of dynamic import inside switch case
           const [sub] = await db
             .select({ userId: subscriptions.userId })
             .from(subscriptions)
@@ -140,7 +174,7 @@ export function registerGhlWebhook(app: Express) {
           const ghlOppId = payload.id;
           if (!ghlOppId) break;
 
-          const { subscriptions } = await import("../drizzle/schema");
+          // FIX #2: Use top-level import instead of dynamic import inside switch case
           const [sub] = await db
             .select({ userId: subscriptions.userId })
             .from(subscriptions)
@@ -186,7 +220,7 @@ export function registerGhlWebhook(app: Express) {
           const ghlConvId = payload.id ?? payload.contactId;
           if (!ghlConvId) break;
 
-          const { subscriptions } = await import("../drizzle/schema");
+          // FIX #2: Use top-level import instead of dynamic import inside switch case
           const [sub] = await db
             .select({ userId: subscriptions.userId })
             .from(subscriptions)

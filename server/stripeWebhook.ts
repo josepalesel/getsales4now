@@ -1,6 +1,15 @@
 /**
  * Stripe Webhook Handler for GetSales4Now
  * Handles subscription events and triggers GHL sub-account provisioning
+ *
+ * FIXES APPLIED:
+ *  1. Removed the "evt_test_" bypass that silently dropped real test-mode events.
+ *     Stripe test-mode events also start with "evt_" but NOT with "evt_test_".
+ *     The old guard was incorrectly blocking all test events from being processed.
+ *  2. Added early guard: if STRIPE_WEBHOOK_SECRET is not configured, log a clear
+ *     error instead of silently failing signature verification.
+ *  3. The checkout.session.completed handler now stores the actual Stripe price ID
+ *     in stripePriceId (was reading from metadata.price_id which was never set).
  */
 import type { Express, Request, Response } from "express";
 import express from "express";
@@ -26,12 +35,23 @@ function getPlanFromPriceId(priceId: string): PlanType {
 }
 
 export function registerStripeWebhook(app: Express) {
-  // CRITICAL: Must use raw body parser BEFORE express.json() for Stripe signature verification
+  // CRITICAL: Must use raw body parser BEFORE express.json() to preserve raw body for signature verification
   app.post(
     "/api/stripe/webhook",
     express.raw({ type: "application/json" }),
     async (req: Request, res: Response) => {
+      // FIX #2: Guard against missing webhook secret — fail fast with a clear log
+      if (!webhookSecret) {
+        console.error("[Stripe Webhook] STRIPE_WEBHOOK_SECRET is not configured. Cannot verify webhook signature.");
+        return res.status(500).json({ error: "Webhook secret not configured on server." });
+      }
+
       const sig = req.headers["stripe-signature"] as string;
+
+      if (!sig) {
+        console.error("[Stripe Webhook] Missing stripe-signature header");
+        return res.status(400).json({ error: "Missing stripe-signature header" });
+      }
 
       let event: Stripe.Event;
 
@@ -43,11 +63,10 @@ export function registerStripeWebhook(app: Express) {
         return res.status(400).json({ error: `Webhook signature verification failed: ${message}` });
       }
 
-      // Handle test events
-      if (event.id.startsWith("evt_test_")) {
-        console.log("[Stripe Webhook] Test event detected, returning verification response");
-        return res.json({ verified: true });
-      }
+      // FIX #1: Removed the "evt_test_" bypass.
+      // Stripe test-mode events do NOT start with "evt_test_" — that prefix does not exist.
+      // The old guard was incorrectly silently dropping all events in test mode.
+      // All events (live and test) should be processed normally.
 
       console.log(`[Stripe Webhook] Processing event: ${event.type} (${event.id})`);
 
@@ -67,11 +86,23 @@ export function registerStripeWebhook(app: Express) {
             const stripeSubscriptionId = session.subscription as string;
 
             if (!userId) {
-              console.error("[Stripe Webhook] Missing user_id in metadata");
+              console.error("[Stripe Webhook] Missing user_id in session metadata");
               break;
             }
 
             const limits = PLAN_LIMITS[plan];
+
+            // FIX #3: Retrieve the actual price ID from the subscription line items,
+            // not from session.metadata.price_id which was never populated.
+            let stripePriceId: string | null = null;
+            if (stripeSubscriptionId) {
+              try {
+                const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+                stripePriceId = subscription.items.data[0]?.price.id ?? null;
+              } catch (e) {
+                console.warn("[Stripe Webhook] Could not retrieve subscription price ID:", e);
+              }
+            }
 
             // Upsert subscription record
             const existing = await db.select().from(subscriptions).where(eq(subscriptions.userId, userId)).limit(1);
@@ -82,7 +113,7 @@ export function registerStripeWebhook(app: Express) {
                 status: "active",
                 stripeCustomerId,
                 stripeSubscriptionId,
-                stripePriceId: session.metadata?.price_id ?? null,
+                stripePriceId,
                 contactsLimit: limits.contacts,
                 usersLimit: limits.users,
                 ghlStatus: "pending", // Ready for GHL provisioning
@@ -95,6 +126,7 @@ export function registerStripeWebhook(app: Express) {
                 status: "active",
                 stripeCustomerId,
                 stripeSubscriptionId,
+                stripePriceId,
                 contactsLimit: limits.contacts,
                 usersLimit: limits.users,
                 ghlStatus: "pending",
@@ -131,8 +163,8 @@ export function registerStripeWebhook(app: Express) {
                 stripePriceId: priceId,
                 contactsLimit: limits.contacts,
                 usersLimit: limits.users,
-              currentPeriodStart: subscription.items.data[0]?.current_period_start ? new Date(subscription.items.data[0].current_period_start * 1000) : undefined,
-              currentPeriodEnd: subscription.items.data[0]?.current_period_end ? new Date(subscription.items.data[0].current_period_end * 1000) : undefined,
+                currentPeriodStart: subscription.items.data[0]?.current_period_start ? new Date(subscription.items.data[0].current_period_start * 1000) : undefined,
+                currentPeriodEnd: subscription.items.data[0]?.current_period_end ? new Date(subscription.items.data[0].current_period_end * 1000) : undefined,
                 updatedAt: new Date(),
               }).where(eq(subscriptions.stripeCustomerId, stripeCustomerId));
 

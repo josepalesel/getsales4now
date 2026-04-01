@@ -9,6 +9,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { registerStripeWebhook } from "../stripeWebhook";
 import { registerGhlWebhook } from "../ghlWebhook";
+import { validateEnv } from "./env";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -30,6 +31,9 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  // Validate environment variables at startup — logs warnings for missing config
+  validateEnv();
+
   const app = express();
   const server = createServer(app);
   // CRITICAL: Register Stripe webhook BEFORE express.json() to preserve raw body for signature verification
