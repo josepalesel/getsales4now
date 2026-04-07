@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { CreditCard, Clock, Shield, Check, ArrowRight, Zap, Building2 } from "lucide-react";
 
-type PlanKey = "starter" | "business";
+type PlanKey = "basic" | "business";
 
 const PLAN_DETAILS: Record<PlanKey, {
   name: string;
@@ -28,52 +28,47 @@ const PLAN_DETAILS: Record<PlanKey, {
   bgColor: string;
   features: string[];
 }> = {
-  starter: {
-    name: "Starter",
-    price: "$118",
+  basic: {
+    name: "Basic",
+    price: "US$ 397",
     period: "/mês",
     icon: Zap,
     color: "text-orange-400",
     borderColor: "border-orange-500/30",
     bgColor: "bg-orange-500/10",
     features: [
-      "1 conta da plataforma",
-      "CRM completo",
-      "Pipeline de vendas",
-      "Gestão de oportunidades",
-      "Calendário e agendamentos",
-      "Formulários",
-      "Landing pages e funis",
-      "Automação básica de follow-up",
-      "Conversas centralizadas",
-      "Suporte padrão",
+      "Respostas automáticas para seus clientes (24h)",
+      "WhatsApp e SMS em um só lugar",
+      "Follow-up automático para não perder clientes",
+      "Ligações direto do sistema",
+      "Agenda automática ou manual",
+      "Publicação nas mídias sociais",
+      "Tudo configurado pela nossa equipe",
     ],
   },
   business: {
     name: "Business",
-    price: "$398",
+    price: "US$ 748",
     period: "/mês",
     icon: Building2,
     color: "text-red-400",
     borderColor: "border-red-500/30",
     bgColor: "bg-red-500/10",
     features: [
-      "Tudo do Starter, mais:",
-      "Estrutura operacional mais robusta",
-      "Workflows mais avançados",
-      "Relatórios mais completos",
-      "Melhor suporte e onboarding",
-      "Mais capacidade de personalização",
-      "Estrutura para equipe comercial",
-      "Funis e rotinas mais sofisticados",
-      "Prioridade no suporte",
+      "Tudo do Basic, mais:",
+      "Até 5 números de WhatsApp",
+      "Pipeline de vendas completo",
+      "Chamadas de vídeo com clientes",
+      "Plataforma de treinamento",
+      "Múltiplos usuários",
+      "Automação avançada",
     ],
   },
 };
 
 function normalizePlan(raw: string): PlanKey {
   if (raw === "business") return "business";
-  return "starter";
+  return "basic";
 }
 
 export default function Checkout() {
@@ -82,7 +77,7 @@ export default function Checkout() {
 
   // Parse plan from URL
   const params = new URLSearchParams(window.location.search);
-  const planParam = params.get("plan") ?? "starter";
+  const planParam = params.get("plan") ?? "basic";
   const isTrial = params.get("trial") === "true";
 
   const planKey = normalizePlan(planParam);
@@ -186,7 +181,7 @@ export default function Checkout() {
                 {[
                   { step: "1", text: "Clique abaixo para abrir o checkout seguro do Stripe" },
                   { step: "2", text: "Adicione seu cartão — sem cobrança por 14 dias" },
-                  { step: "3", text: "Você será redirecionado automaticamente para configurar sua conta" },
+                  { step: "3", text: "Volte aqui para configurar sua conta GS4N" },
                   { step: "4", text: "Comece a usar todos os recursos imediatamente" },
                 ].map((item) => (
                   <li key={item.step} className="flex items-start gap-3">

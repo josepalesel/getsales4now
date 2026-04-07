@@ -338,3 +338,27 @@
 - [x] Adicionar verificação direta na Stripe API para sessões de checkout com payment_status="paid" ou subscription ativa
 - [x] Bloquear acesso ao /ghl-onboarding se usuário não passou pelo Stripe (sem stripeSubscriptionId)
 - [x] Testar fluxo completo: cadastro → Stripe → onboarding → GHL criado
+
+## Refatoração — Substituir GHL por GS4N (Abr 02, 2026)
+- [x] Substituir todas as referências "GHL" por "GS4N" em textos visíveis ao usuário (UI, labels, mensagens)
+- [x] Substituir variáveis e nomes de funções internas "ghl" por "gs4n" no código
+- [x] Substituir referências em routers, db, schema e arquivos de configuração
+- [x] Substituir em arquivos de teste
+
+## Integração Stripe — Alpes Group (Abr 02, 2026)
+- [ ] Configurar chave privada Stripe da Alpes Group (aguardando chave sk_live_ ou sk_test_)
+- [ ] Configurar conta Stripe acct_1T7hfREZjYg2lJrP para cobranças conectadas
+- [ ] Testar checkout com a nova conta Stripe
+
+## Novo Conceito — Benefícios, Copy Vendedora e Novos Planos (Abr 07, 2026)
+- [x] Reescrever Home.tsx com nova copy baseada em benefícios (não tecnologia)
+- [x] Hero: "Pare de perder clientes por não responder rápido" + assistente 24h/7
+- [x] Atualizar seção de planos na Home com Basic (US$397/mês) e Business (US$748/mês)
+- [x] Reescrever Pricing.tsx com novos planos Basic e Business e seus benefícios
+- [x] Plano Basic: US$248 setup + US$397/mês — benefícios conforme documento
+- [x] Plano Business: US$748 setup + US$748/mês — benefícios conforme documento
+- [x] Atualizar Checkout.tsx com novos nomes e preços
+- [x] Atualizar CriarConta.tsx com novos nomes de planos
+- [x] Renomear "starter" para "basic" no backend (routers.ts, schema, db)
+- [x] Atualizar preços no backend: Basic=39700 cents, Business=74800 cents
+- [x] Atualizar testes para novos planos e preços (35/35 passando)

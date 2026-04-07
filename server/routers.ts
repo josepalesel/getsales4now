@@ -48,9 +48,9 @@ function getStripe() {
 // Keep a module-level instance for non-test environments
 const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2026-03-25.dahlia" }) : null;
 
-// Stripe Price IDs — Starter ($118/mo) and Business ($398/mo)
+// Stripe Price IDs — Basic ($397/mo) and Business ($748/mo)
 const STRIPE_PRICES: Record<string, Record<string, string>> = {
-  starter: { monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_STARTER_YEARLY ?? "" },
+  basic:    { monthly: process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_STARTER_YEARLY ?? "" },
   business: { monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "", yearly: process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "" },
   // Corp is contact-us only — no Stripe price
 };
@@ -955,7 +955,7 @@ const adminRouter = router({
       .from(integrations);
     const connectedProviders = new Set(allIntegrations.filter(i => i.status === "connected").map(i => i.provider));
     const integrationHealth = [
-      { name: "GoHighLevel", status: connectedProviders.has("ghl") ? "connected" : "disconnected" },
+      { name: "GS4N", status: connectedProviders.has("ghl") ? "connected" : "disconnected" },
       { name: "WhatsApp Business", status: connectedProviders.has("whatsapp") ? "connected" : "disconnected" },
       { name: "Meta Ads", status: connectedProviders.has("meta") ? "connected" : "disconnected" },
       { name: "Email (SMTP)", status: connectedProviders.has("email") ? "connected" : "disconnected" },
@@ -1002,59 +1002,56 @@ const billingRouter = router({
   getPlans: publicProcedure.query(() => {
     return [
       {
-        id: "starter",
-        name: "Starter",
-        description: "Ideal para pequenas empresas, profissionais liberais e operações em fase inicial.",
-        price: { monthly: 118, yearly: Math.round(118 * 12 * 0.8) },
-        monthlyPrice: 118,
-        yearlyPrice: Math.round(118 * 12 * 0.8),
+        id: "basic",
+        name: "Basic",
+        description: "Pare de perder clientes e responda na hora — sem precisar mexer em tecnologia.",
+        price: { monthly: 397, yearly: Math.round(397 * 12 * 0.8) },
+        monthlyPrice: 397,
+        yearlyPrice: Math.round(397 * 12 * 0.8),
+        setupFee: 248,
         currency: "USD",
-        limits: PLAN_LIMITS.starter,
+        limits: PLAN_LIMITS.basic,
         features: [
-          "1 conta da plataforma",
-          "CRM completo",
-          "Pipeline de vendas",
-          "Gestão de oportunidades",
-          "Calendário e agendamentos",
-          "Formulários",
-          "Landing pages e funis",
-          "Automação básica de follow-up",
-          "Gestão de contatos",
-          "Dashboard básico",
-          "Conversas centralizadas",
-          "Suporte padrão",
+          "Respostas automáticas para seus clientes (24h)",
+          "Todas as mensagens em um só lugar (WhatsApp e SMS)",
+          "Follow-up automático para não perder clientes",
+          "Ligações direto do sistema",
+          "Organização simples dos seus clientes",
+          "Agenda e calendário configurado automático ou manual",
+          "Publicação nas mídias sociais",
+          "Tudo configurado para você — sem precisar de tecnologia",
         ],
-        notIncluded: ["SMS", "Ligações", "WhatsApp", "Inteligência artificial", "Hospedagem WordPress", "Aplicativo white-label"],
-        summary: "Uma base sólida para empresas que precisam começar com organização, controle e automação sem entrar em uma estrutura complexa.",
+        notIncluded: ["Múltiplos números de WhatsApp", "Chamadas de vídeo", "Plataforma de treinamento", "Múltiplos usuários"],
+        summary: "Um sistema completo de atendimento e vendas configurado pela nossa equipe. Você só precisa usar.",
         highlighted: false,
-        trialDays: 14,
+        trialDays: 0,
         contactSales: false,
       },
       {
         id: "business",
         name: "Business",
-        description: "Ideal para empresas em crescimento que precisam de mais robustez operacional e automação avançada.",
-        price: { monthly: 398, yearly: Math.round(398 * 12 * 0.8) },
-        monthlyPrice: 398,
-        yearlyPrice: Math.round(398 * 12 * 0.8),
+        description: "Um sistema completo para organizar, automatizar e escalar seus clientes — sem perder oportunidades.",
+        price: { monthly: 748, yearly: Math.round(748 * 12 * 0.8) },
+        monthlyPrice: 748,
+        yearlyPrice: Math.round(748 * 12 * 0.8),
+        setupFee: 748,
         currency: "USD",
         limits: PLAN_LIMITS.business,
         features: [
-          "Tudo do Starter, mais:",
-          "Estrutura operacional mais robusta",
-          "Workflows mais avançados",
-          "Melhor organização de processos comerciais",
-          "Relatórios mais completos",
-          "Melhor suporte e onboarding",
-          "Mais capacidade de personalização",
-          "Estrutura para equipe comercial",
-          "Funis e rotinas mais sofisticados",
-          "Prioridade no suporte",
+          "Tudo do Basic, mais:",
+          "Gerencie todos seus clientes em um só lugar (WhatsApp, SMS, Mídias Sociais e mais)",
+          "Até 5 números de WhatsApp — Voz e texto para sua equipe",
+          "Respostas automáticas + conversas automatizadas avançadas",
+          "Pipeline de vendas com controle total",
+          "Chamadas de vídeo integradas com clientes",
+          "Plataforma de treinamento para equipe ou clientes",
+          "Acesso para múltiplos usuários",
+          "Tudo configurado e pronto para uso",
         ],
-        notIncluded: ["SMS", "Ligações", "WhatsApp", "Inteligência artificial", "Hospedagem WordPress", "Aplicativo white-label"],
-        summary: "O plano mais equilibrado entre valor entregue, maturidade operacional e retorno sobre investimento.",
+        notIncluded: [],
+        summary: "O sistema mais completo para empresas que querem crescer com organização, automação e atendimento de qualidade.",
         highlighted: true,
-        trialDays: 14,
+        trialDays: 0,
         contactSales: false,
       },
       {
@@ -1094,7 +1091,7 @@ const billingRouter = router({
 
    createCheckout: protectedProcedure
     .input(z.object({
-      plan: z.enum(["starter", "business"]),
+      plan: z.enum(["basic", "business"]),
       billing: z.enum(["monthly", "yearly"]).default("monthly"),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -1103,8 +1100,8 @@ const billingRouter = router({
       const origin = (ctx.req.headers.origin as string) || process.env.APP_URL || "https://getsales4now.agency";
       // Real prices in cents
       const planPrices: Record<string, Record<string, number>> = {
-        starter: { monthly: 11800, yearly: Math.round(118 * 12 * 0.8 * 100) },
-        business: { monthly: 39800, yearly: Math.round(398 * 12 * 0.8 * 100) },
+        basic:    { monthly: 39700, yearly: Math.round(397 * 12 * 0.8 * 100) },
+        business: { monthly: 74800, yearly: Math.round(748 * 12 * 0.8 * 100) },
       };
 
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -1173,7 +1170,7 @@ const billingRouter = router({
   }),
 });
 
-// ─── GHL PROVISIONING ROUTER ─────────────────────────────────────────────────
+// ─── GS4N PROVISIONING ROUTER ─────────────────────────────────────────────────
 const ghlProvisioningRouter = router({
   triggerProvisioning: protectedProcedure
     .input(z.object({
@@ -1198,7 +1195,7 @@ const ghlProvisioningRouter = router({
       if (!isValid) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Token da agência inválido. Entre em contato com o suporte." });
 
       // ─── VERIFICAÇÃO DE PAGAMENTO STRIPE ────────────────────────────────────────
-      // REGRA: A sub-conta GHL só pode ser criada se o usuário tiver um
+      // REGRA: A sub-conta GS4N só pode ser criada se o usuário tiver um
       // stripeSubscriptionId válido OU uma sessão de checkout paga no Stripe.
       // Apenas ter um plano "starter" ou "business" no banco NÃO é suficiente —
       // o usuário pode ter esse plano definido antes de pagar (durante o registro).
@@ -1283,7 +1280,7 @@ const ghlProvisioningRouter = router({
         // Usar o Company ID da plataforma SaaS getsales4now.com
         const ghlCompanyId = process.env.GHL_COMPANY_ID;
         if (!ghlCompanyId) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Company ID da plataforma SaaS não configurado." });
-        // Criar sub-conta GHL dentro da plataforma SaaS getsales4now.com
+        // Criar sub-conta GS4N dentro da plataforma SaaS getsales4now.com
         const location = await createGhlLocation({
           name: input.businessName,
           email: input.businessEmail,
@@ -1342,7 +1339,7 @@ const ghlProvisioningRouter = router({
           await db.insert(integrations).values({
             userId: ctx.user.id,
             provider: "ghl",
-            name: "GoHighLevel",
+            name: "GS4N",
             config: { locationId: location.id },
             status: "connected",
             lastCheckedAt: new Date(),
@@ -1360,7 +1357,7 @@ const ghlProvisioningRouter = router({
           status: "failed",
           errorMessage: errorMsg,
         });
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `GHL provisioning failed: ${errorMsg}` });
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `GS4N provisioning failed: ${errorMsg}` });
       }
     }),
 
@@ -1398,7 +1395,7 @@ export const appRouter = router({
   integrations: integrationsRouter,
    admin: adminRouter,
   billing: billingRouter,
-  ghlProvisioning: ghlProvisioningRouter,
+  gs4nProvisioning: ghlProvisioningRouter,
   authOwn: authOwnRouter,
   ghlSync: ghlSyncRouter,
 });

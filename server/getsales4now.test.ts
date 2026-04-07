@@ -201,11 +201,11 @@ describe("billing router structure", () => {
     const plans = await caller.billing.getPlans();
     expect(Array.isArray(plans)).toBe(true);
     const planIds = plans.map((p: { id: string }) => p.id);
-    expect(planIds).toContain("starter");
+    expect(planIds).toContain("basic");
     expect(planIds).toContain("business");
   });
 
-  it("Starter plan price is 118", async () => {
+  it("Basic plan price is 397", async () => {
     const ctx: TrpcContext = {
       user: null,
       req: { protocol: "https", headers: {} } as TrpcContext["req"],
@@ -213,12 +213,12 @@ describe("billing router structure", () => {
     };
     const caller = appRouter.createCaller(ctx);
     const plans = await caller.billing.getPlans();
-    const starter = plans.find((p: { id: string }) => p.id === "starter");
-    expect(starter).toBeDefined();
-    expect(starter.monthlyPrice).toBe(118);
+    const basic = plans.find((p: { id: string }) => p.id === "basic");
+    expect(basic).toBeDefined();
+    expect(basic.monthlyPrice).toBe(397);
   });
 
-  it("Business plan price is 398", async () => {
+  it("Business plan price is 748", async () => {
     const ctx: TrpcContext = {
       user: null,
       req: { protocol: "https", headers: {} } as TrpcContext["req"],
@@ -228,7 +228,7 @@ describe("billing router structure", () => {
     const plans = await caller.billing.getPlans();
     const business = plans.find((p: { id: string }) => p.id === "business");
     expect(business).toBeDefined();
-    expect(business.monthlyPrice).toBe(398);
+    expect(business.monthlyPrice).toBe(748);
   });
 });
 
@@ -319,7 +319,7 @@ describe("billing.createCheckout auth guard", () => {
   });
 });
 
-describe("ghlProvisioning.triggerProvisioning — payment guard", () => {
+describe("gs4nProvisioning.triggerProvisioning — payment guard", () => {
   it("rejects provisioning for unauthenticated user (UNAUTHORIZED)", async () => {
     const publicCtx: TrpcContext = {
       user: null,
@@ -328,7 +328,7 @@ describe("ghlProvisioning.triggerProvisioning — payment guard", () => {
     };
     const caller = appRouter.createCaller(publicCtx);
     await expect(
-      (caller.ghlProvisioning as unknown as { triggerProvisioning: (i: unknown) => Promise<unknown> }).triggerProvisioning({
+      (caller.gs4nProvisioning as unknown as { triggerProvisioning: (i: unknown) => Promise<unknown> }).triggerProvisioning({
         businessName: "Test Company",
         businessEmail: "test@company.com",
         businessPhone: "+5511999999999",
@@ -345,7 +345,7 @@ describe("ghlProvisioning.triggerProvisioning — payment guard", () => {
     ctx.user = { ...ctx.user!, id: 9999 };
     const caller = appRouter.createCaller(ctx);
     await expect(
-      caller.ghlProvisioning.triggerProvisioning({
+      caller.gs4nProvisioning.triggerProvisioning({
         businessName: "Test Company",
         businessEmail: "test@company.com",
         businessPhone: "+5511999999999",
@@ -356,12 +356,12 @@ describe("ghlProvisioning.triggerProvisioning — payment guard", () => {
   });
 });
 
-describe("ghlProvisioning.getStatus — payment confirmed field", () => {
+describe("gs4nProvisioning.getStatus — payment confirmed field", () => {
   it("returns null when user has no subscription", async () => {
     const { ctx } = createAuthContext("user");
     ctx.user = { ...ctx.user!, id: 9999 };
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.ghlProvisioning.getStatus();
+    const result = await caller.gs4nProvisioning.getStatus();
     expect(result).toBeNull();
   });
 });

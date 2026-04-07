@@ -14,71 +14,63 @@ import { getLoginUrl } from "@/const";
 // ─── Plan data ────────────────────────────────────────────────────────────────
 const PLANS = [
   {
-    id: "starter" as const,
-    name: "Starter",
-    tagline: "Uma base sólida para começar com organização e controle.",
-    price: 118,
-    yearlyPrice: Math.round(118 * 12 * 0.8),
+    id: "basic" as const,
+    name: "Basic",
+    tagline: "Pare de perder clientes e responda na hora — sem precisar mexer em tecnologia.",
+    price: 397,
+    setupFee: 248,
+    yearlyPrice: Math.round(397 * 12 * 0.8),
     highlighted: false,
     contactSales: false,
     badge: null as string | null,
     color: "orange" as const,
-    idealFor: "Pequenas empresas, profissionais liberais, prestadores de serviço e operações em fase inicial.",
+    idealFor: "Profissionais autônomos, pequenos negócios e prestadores de serviço que querem atender melhor sem contratar mais.",
     features: [
-      "1 conta da plataforma",
-      "CRM completo",
-      "Pipeline de vendas",
-      "Gestão de oportunidades",
-      "Calendário e agendamentos",
-      "Formulários",
-      "Landing pages e funis",
-      "Automação básica de follow-up",
-      "Gestão de contatos",
-      "Dashboard básico",
-      "Conversas centralizadas",
-      "Estrutura operacional inicial",
-      "Suporte padrão",
+      "Respostas automáticas para seus clientes (24h)",
+      "Todas as mensagens em um só lugar (WhatsApp e SMS)",
+      "Follow-up automático para não perder clientes",
+      "Ligações direto do sistema",
+      "Organização simples dos seus clientes",
+      "Agenda e calendário configurado automático ou manual",
+      "Sistema de publicação nas mídias sociais",
+      "Tudo configurado para você — sem precisar de tecnologia",
     ],
     notIncluded: [
-      "SMS", "Ligações", "Números de telefone", "WhatsApp",
-      "Inteligência artificial", "Hospedagem WordPress",
-      "Online Listings", "Aplicativo white-label",
-      "IP dedicado", "Ações premium de workflow",
-      "Integrações e demandas especiais",
+      "Múltiplos números de WhatsApp",
+      "Chamadas de vídeo com clientes",
+      "Plataforma de treinamento",
+      "Acesso para múltiplos usuários",
+      "Pipeline de vendas avançado",
     ],
-    summary: "Uma base sólida para empresas que precisam começar com organização, controle e automação sem entrar em uma estrutura complexa.",
+    summary: "Um sistema completo de atendimento e vendas configurado pela nossa equipe. Você só precisa usar.",
   },
   {
     id: "business" as const,
     name: "Business",
-    tagline: "O plano mais equilibrado entre valor entregue e retorno sobre investimento.",
-    price: 398,
-    yearlyPrice: Math.round(398 * 12 * 0.8),
+    tagline: "Um sistema completo para organizar, automatizar e escalar seus clientes — sem perder oportunidades.",
+    price: 748,
+    setupFee: 748,
+    yearlyPrice: Math.round(748 * 12 * 0.8),
     highlighted: true,
     contactSales: false,
-    badge: "Mais popular" as string | null,
+    badge: "Mais completo" as string | null,
     color: "red" as const,
-    idealFor: "Empresas em crescimento que precisam de mais robustez operacional, melhor acompanhamento comercial e automação mais avançada.",
+    idealFor: "Empresas em crescimento, equipes de vendas e negócios que precisam escalar o atendimento sem perder qualidade.",
     features: [
-      "Tudo do Starter, mais:",
-      "Estrutura operacional mais robusta",
-      "Workflows mais avançados",
-      "Melhor organização de processos comerciais",
-      "Relatórios mais completos",
-      "Melhor suporte e onboarding",
-      "Mais capacidade de personalização",
-      "Estrutura mais adequada para equipe comercial",
-      "Funis e rotinas mais sofisticados",
-      "Prioridade no suporte",
+      "Tudo do Basic, mais:",
+      "Gerencie todos seus clientes em um só lugar (WhatsApp, SMS, Mídias Sociais e mais)",
+      "Até 5 números de WhatsApp — Voz e texto para sua equipe",
+      "Respostas automáticas + conversas automatizadas avançadas",
+      "Sistema de agenda e agendamento personalizado",
+      "Follow-ups automáticos para aumentar conversões",
+      "Pipeline de vendas com controle total",
+      "Chamadas de vídeo integradas com clientes",
+      "Plataforma de treinamento para equipe ou clientes",
+      "Acesso para múltiplos usuários",
+      "Tudo configurado e pronto para uso",
     ],
-    notIncluded: [
-      "SMS", "Ligações", "Números de telefone", "WhatsApp",
-      "Inteligência artificial", "Hospedagem WordPress",
-      "Online Listings", "Aplicativo white-label",
-      "IP dedicado", "Ações premium de workflow",
-      "Integrações avançadas sob demanda",
-    ],
-    summary: "Este é o plano mais equilibrado entre valor entregue, maturidade operacional e retorno sobre investimento.",
+    notIncluded: [],
+    summary: "O sistema mais completo para empresas que querem crescer com organização, automação e atendimento de qualidade.",
   },
   {
     id: "corp" as const,
@@ -140,7 +132,7 @@ const COLOR_MAP = {
   },
 };
 
-const PLAN_ICONS = { starter: Zap, business: Building2, corp: Globe };
+const PLAN_ICONS = { basic: Zap, business: Building2, corp: Globe };
 
 export default function Pricing() {
   const [, navigate] = useLocation();
@@ -158,7 +150,7 @@ export default function Pricing() {
     onError: (err) => toast.error(err.message),
   });
 
-  const handleSelectPlan = (planId: "starter" | "business" | "corp") => {
+  const handleSelectPlan = (planId: "basic" | "business" | "corp") => {
     if (planId === "corp") {
       window.location.href = "mailto:contato@getsales4now.agency?subject=Plano Corp - Consulta";
       return;
@@ -167,7 +159,7 @@ export default function Pricing() {
       window.location.href = getLoginUrl();
       return;
     }
-    createCheckout.mutate({ plan: planId, billing });
+    createCheckout.mutate({ plan: planId as "basic" | "business", billing });
   };
 
   return (
@@ -456,7 +448,7 @@ export default function Pricing() {
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Button
-              onClick={() => handleSelectPlan("starter")}
+              onClick={() => handleSelectPlan("basic")}
               className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold px-8"
             >
               Começar com Starter — US$ 118/mês

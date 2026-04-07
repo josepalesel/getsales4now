@@ -40,8 +40,13 @@
     {
       "idx": 5,
       "version": "5",
+<<<<<<< Updated upstream
       "when": 1743532800000,
       "tag": "0005_fix_subscriptions_plan_enum",
+=======
+      "when": 1775578608173,
+      "tag": "0005_friendly_big_bertha",
+>>>>>>> Stashed changes
       "breakpoints": true
     }
   ]

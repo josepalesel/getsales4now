@@ -16,7 +16,7 @@ const registerSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
-  plan: z.enum(["starter", "business"]),
+  plan: z.enum(["basic", "business"]),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "Passwords do not match",
   path: ["confirmPassword"],
@@ -27,47 +27,42 @@ type RegisterForm = z.infer<typeof registerSchema>;
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 const PLANS = [
   {
-    id: "starter" as const,
-    name: "Starter",
-    price: "$118",
-    period: "/month",
-    description: "Perfect for small businesses getting started with digital marketing",
+    id: "basic" as const,
+    name: "Basic",
+    price: "US$ 397",
+    period: "/mês",
+    description: "Pare de perder clientes e responda na hora — sem precisar mexer em tecnologia.",
     color: "from-orange-500 to-orange-600",
     borderColor: "border-orange-500",
     bgColor: "bg-orange-500/10",
     features: [
-      "Up to 5,000 contacts",
-      "3 team members",
-      "Email & WhatsApp campaigns",
-      "CRM with pipeline",
-      "Social media calendar",
-      "AI content generation",
-      "Basic reports",
-      "14-day free trial",
+      "Respostas automáticas 24h",
+      "WhatsApp, SMS em um só lugar",
+      "Follow-up automático",
+      "Ligações direto do sistema",
+      "Agenda automática ou manual",
+      "Publicação nas mídias sociais",
+      "Tudo configurado pela nossa equipe",
     ],
   },
   {
     id: "business" as const,
     name: "Business",
-    price: "$398",
-    period: "/month",
-    description: "Full power for growing businesses and agencies",
+    price: "US$ 748",
+    period: "/mês",
+    description: "Organize, automatize e escale seus clientes — sem perder oportunidades.",
     color: "from-red-500 to-red-600",
     borderColor: "border-red-500",
     bgColor: "bg-red-500/10",
-    badge: "Most Popular",
+    badge: "Mais Completo",
     features: [
-      "Unlimited contacts",
-      "10 team members",
-      "All channels (Email, WhatsApp, SMS)",
-      "Advanced CRM + AI scoring",
-      "Full funnel builder",
-      "Omnichannel inbox",
-      "AI copilots (6 agents)",
-      "GoHighLevel sub-account",
-      "White-label ready",
-      "Priority support",
-      "14-day free trial",
+      "Tudo do Basic, mais:",
+      "Até 5 números de WhatsApp",
+      "Pipeline de vendas completo",
+      "Chamadas de vídeo com clientes",
+      "Plataforma de treinamento",
+      "Múltiplos usuários",
+      "Automação avançada",
     ],
   },
 ];
@@ -77,7 +72,7 @@ export default function Register() {
   const [, navigate] = useLocation();
   const search = useSearch();
   const params = new URLSearchParams(search);
-  const planFromUrl = params.get("plan") as "starter" | "business" | null;
+  const planFromUrl = params.get("plan") as "basic" | "business" | null;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -93,12 +88,12 @@ export default function Register() {
     formState: { errors },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { plan: planFromUrl ?? "starter" },
+    defaultValues: { plan: planFromUrl ?? "basic" },
   });
 
   // Sincroniza o plano da URL com o formulário
   useEffect(() => {
-    if (planFromUrl && (planFromUrl === "starter" || planFromUrl === "business")) {
+    if (planFromUrl && (planFromUrl === "basic" || planFromUrl === "business")) {
       setValue("plan", planFromUrl);
     }
   }, [planFromUrl, setValue]);
@@ -126,7 +121,7 @@ export default function Register() {
     registerMutation.mutate(data);
   };
 
-  const handlePlanSelect = (planId: "starter" | "business") => {
+  const handlePlanSelect = (planId: "basic" | "business") => {
     setValue("plan", planId);
     setStep("form");
   };
@@ -246,7 +241,7 @@ export default function Register() {
               ← Trocar plano
             </button>
             <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border ${currentPlan.borderColor} ${currentPlan.bgColor}`}>
-              {selectedPlan === "starter" ? <Zap className="w-3.5 h-3.5 text-orange-400" /> : <Building2 className="w-3.5 h-3.5 text-red-400" />}
+              {selectedPlan === "basic" ? <Zap className="w-3.5 h-3.5 text-orange-400" /> : <Building2 className="w-3.5 h-3.5 text-red-400" />}
               <span className="text-white text-xs font-semibold">{currentPlan.name} — {currentPlan.price}/mo</span>
             </div>
           </div>

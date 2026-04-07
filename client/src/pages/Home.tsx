@@ -1,330 +1,361 @@
 /**
- * GetSales4Now — Landing Page / Sales Funnel
- * Objetivo: converter visitante em assinante em 3 cliques
- * Fluxo: Hero CTA → Planos → Cadastro → Pagamento → Wizard GHL → Sub-conta criada
+ * GetSales4Now — Landing Page
+ * Nova copy focada em benefícios: "Pare de perder clientes por não responder rápido"
  */
-import { Link, useLocation } from "wouter";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowRight, Check, Zap, Building2, Rocket, Shield,
-  MessageSquare, Users, BarChart3, Bot, Globe, Star,
-  ChevronRight, Mail, CheckCircle2
+  CheckCircle2, ArrowRight, MessageSquare, Clock, Users,
+  Zap, Phone, Calendar, TrendingUp, Star, Shield,
+  ChevronRight, Play, Bot, Repeat2,
+  HeadphonesIcon, Building2, Sparkles,
 } from "lucide-react";
 
-const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310419663030051896/YU6nqmaEyUsACHGWVz8xRF/GetSales4Now_logo_transparent_a2f08e10.jpg";
-
-// ─── Plan Data ────────────────────────────────────────────────────────────────
+// ─── Planos ───────────────────────────────────────────────────────────────────
 const PLANS = [
   {
-    id: "starter",
-    name: "Starter",
-    price: "US$ 118",
-    period: "/mês",
-    badge: null,
-    color: "from-orange-500 to-orange-600",
-    border: "border-orange-500/40",
-    glow: "shadow-orange-500/20",
-    features: [
-      "Sub-conta GoHighLevel criada automaticamente",
-      "Até 5.000 contatos",
-      "3 usuários",
-      "CRM + Pipeline de vendas",
-      "Campanhas Email, WhatsApp e SMS",
-      "Calendário de redes sociais",
-      "Geração de conteúdo com IA",
-      "Relatórios básicos",
-      "Trial de 14 dias grátis",
+    id: "basic",
+    name: "Basic",
+    tagline: "Pare de perder clientes e responda na hora",
+    setupFee: 248,
+    price: 397,
+    highlight: false,
+    cta: "Começar com Basic",
+    benefits: [
+      "Respostas automáticas para seus clientes (24h)",
+      "Todas as mensagens em um só lugar (WhatsApp e SMS)",
+      "Follow-up automático para não perder clientes",
+      "Ligações direto do sistema",
+      "Organização simples dos seus clientes",
+      "Agenda e calendário configurado automático ou manual",
+      "Publicação nas mídias sociais",
+      "Tudo configurado para você — sem precisar de tecnologia",
     ],
   },
   {
     id: "business",
     name: "Business",
-    price: "US$ 398",
-    period: "/mês",
-    badge: "Mais Popular",
-    color: "from-red-500 to-red-600",
-    border: "border-red-500/60",
-    glow: "shadow-red-500/30",
-    features: [
-      "Sub-conta GoHighLevel criada automaticamente",
-      "Contatos ilimitados",
-      "10 usuários",
-      "CRM avançado + IA de scoring",
-      "Todos os canais (Email, WhatsApp, SMS)",
-      "Construtor de funis completo",
-      "Inbox omnichannel",
-      "6 agentes de IA copiloto",
-      "White-label disponível",
-      "Suporte prioritário",
-      "Trial de 14 dias grátis",
+    tagline: "Organize, automatize e escale — sem perder oportunidades",
+    setupFee: 748,
+    price: 748,
+    highlight: true,
+    cta: "Começar com Business",
+    benefits: [
+      "Gerencie todos seus clientes em um só lugar (WhatsApp, SMS, Mídias Sociais e mais)",
+      "Até 5 números de WhatsApp — Voz e texto para sua equipe",
+      "Respostas automáticas + conversas automatizadas avançadas",
+      "Sistema de agenda e agendamento personalizado",
+      "Follow-ups automáticos para aumentar conversões",
+      "Pipeline de vendas com controle total",
+      "Chamadas de vídeo integradas com clientes",
+      "Plataforma de treinamento para equipe ou clientes",
+      "Acesso para múltiplos usuários",
+      "Tudo configurado e pronto para uso",
     ],
   },
 ];
 
-const STEPS = [
-  { n: "1", label: "Escolha seu plano", desc: "Starter ou Business — 14 dias grátis" },
-  { n: "2", label: "Crie sua conta", desc: "Nome, e-mail e senha em 30 segundos" },
-  { n: "3", label: "Pagamento seguro", desc: "Stripe — sem cobrança no trial" },
-  { n: "4", label: "Dados da empresa", desc: "Wizard rápido de onboarding" },
-  { n: "5", label: "Sub-conta GHL criada!", desc: "Sua conta está pronta para usar" },
+// ─── Depoimentos ──────────────────────────────────────────────────────────────
+const TESTIMONIALS = [
+  {
+    name: "Carlos Mendes",
+    role: "Corretor de Imóveis",
+    country: "🇧🇷 Brasil",
+    text: "Antes eu perdia clientes porque demorava para responder. Agora o sistema responde na hora e eu só entro na conversa quando o cliente já está quente.",
+    stars: 5,
+  },
+  {
+    name: "Ana Luiza Ferreira",
+    role: "Clínica de Estética",
+    country: "🇧🇷 Brasil",
+    text: "Minha agenda encheu em 2 semanas. O sistema agenda automaticamente e ainda manda lembrete pro cliente. Não perco mais consulta por esquecimento.",
+    stars: 5,
+  },
+  {
+    name: "Roberto Silva",
+    role: "Agência de Marketing",
+    country: "🇲🇽 México",
+    text: "Gerencio 12 clientes com a equipe inteira no mesmo sistema. Cada um vê só o que precisa. Economizei 3 ferramentas diferentes.",
+    stars: 5,
+  },
 ];
 
-const FEATURES = [
-  { icon: Users, color: "text-blue-400", bg: "bg-blue-500/10", title: "CRM Completo", desc: "Organize contatos, acompanhe oportunidades e nunca perca um follow-up." },
-  { icon: MessageSquare, color: "text-green-400", bg: "bg-green-500/10", title: "Inbox Omnichannel", desc: "WhatsApp, e-mail, SMS e redes sociais em uma única caixa de entrada." },
-  { icon: Bot, color: "text-purple-400", bg: "bg-purple-500/10", title: "IA Copiloto", desc: "Agentes de IA que geram conteúdo, qualificam leads e automatizam follow-ups." },
-  { icon: BarChart3, color: "text-orange-400", bg: "bg-orange-500/10", title: "Relatórios em Tempo Real", desc: "Dashboards de performance de campanhas, funis e equipe de vendas." },
-  { icon: Rocket, color: "text-red-400", bg: "bg-red-500/10", title: "Funis de Vendas", desc: "Construa landing pages e funis de alta conversão sem código." },
-  { icon: Globe, color: "text-cyan-400", bg: "bg-cyan-500/10", title: "Multi-idioma", desc: "Plataforma disponível em Português, Inglês e Espanhol." },
+// ─── Problemas que resolvemos ─────────────────────────────────────────────────
+const PROBLEMS = [
+  {
+    icon: <Clock className="w-6 h-6" />,
+    problem: "Cliente manda mensagem e você demora para responder",
+    solution: "Resposta automática imediata — 24h por dia, 7 dias por semana",
+  },
+  {
+    icon: <MessageSquare className="w-6 h-6" />,
+    problem: "Mensagens espalhadas em WhatsApp, Instagram, e-mail...",
+    solution: "Tudo centralizado em um único lugar — sem perder nada",
+  },
+  {
+    icon: <Repeat2 className="w-6 h-6" />,
+    problem: "Clientes somem e você esquece de fazer o follow-up",
+    solution: "Follow-up automático que traz o cliente de volta sem esforço",
+  },
+  {
+    icon: <Calendar className="w-6 h-6" />,
+    problem: "Agenda bagunçada e clientes faltando em compromissos",
+    solution: "Agendamento automático com lembretes que reduzem faltas em 80%",
+  },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Como funciona ────────────────────────────────────────────────────────────
+const HOW_IT_WORKS = [
+  { n: "1", label: "Escolha seu plano", desc: "Basic ou Business — de acordo com o tamanho do seu negócio" },
+  { n: "2", label: "Nós configuramos tudo", desc: "Nossa equipe monta e personaliza o sistema para você" },
+  { n: "3", label: "Seu sistema entra no ar", desc: "Em até 48h seu sistema está funcionando e respondendo clientes" },
+  { n: "4", label: "Você vende mais", desc: "Enquanto o sistema trabalha, você foca no que importa: fechar negócios" },
+];
+
 export default function Home() {
-  const { user, isAuthenticated, loading } = useAuth();
-  const [, navigate] = useLocation();
-
-  const handlePlanCTA = (planId: string) => {
-    navigate(`/criar-conta?plan=${planId}`);
-  };
-
-  // Loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#020817]">
-        <div className="flex flex-col items-center gap-4">
-          <img src={LOGO_URL} alt="GetSales4Now" className="w-16 h-16 rounded-xl animate-pulse" />
-          <div className="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    );
-  }
-
-  // Nota: usuários autenticados veem a landing page normalmente.
-  // Não redirecionamos automaticamente para não bloquear o fluxo pós-pagamento.
-
   return (
-    <div className="min-h-screen bg-[#020817] text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#0a0f1e] text-white">
 
-      {/* ── NAV ── */}
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-white/10 bg-[#020817]/90 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <img src={LOGO_URL} alt="GetSales4Now" className="w-9 h-9 rounded-xl object-cover" />
-            <span className="text-white font-bold text-lg tracking-tight">GetSales4Now</span>
+      {/* ─── NAV ─────────────────────────────────────────────────────────── */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0f1e]/95 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm shadow-lg">GS</div>
+            <span className="text-white font-bold text-xl">GetSales4Now</span>
+          </div>
+          <div className="hidden md:flex items-center gap-6 text-sm text-white/60">
+            <a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a>
+            <a href="#planos" className="hover:text-white transition-colors">Planos</a>
+            <a href="#depoimentos" className="hover:text-white transition-colors">Resultados</a>
           </div>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button size="sm" variant="ghost" className="text-white/70 hover:text-white hover:bg-white/10">
-                Entrar
+              <Button variant="ghost" size="sm" className="text-white/70 hover:text-white">Entrar</Button>
+            </Link>
+            <Link href="/criar-conta">
+              <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold shadow-lg shadow-orange-500/20">
+                Começar agora <ArrowRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
-            <button
-              onClick={() => handlePlanCTA("starter")}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-semibold text-sm transition-all"
-            >
-              Começar grátis <ArrowRight className="w-3.5 h-3.5" />
-            </button>
           </div>
         </div>
       </nav>
 
-      {/* ── HERO ── */}
-      <section className="pt-32 pb-20 px-4 relative">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-gradient-to-r from-orange-500/10 via-red-500/10 to-orange-500/10 blur-3xl rounded-full" />
-        </div>
+      {/* ─── HERO ────────────────────────────────────────────────────────── */}
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="max-w-4xl mx-auto text-center relative">
-          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/30 rounded-full px-4 py-1.5 text-orange-400 text-sm font-medium mb-6">
-            <Zap className="w-4 h-4" />
-            Sub-conta GoHighLevel criada em minutos — automaticamente
+        <div className="max-w-4xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-4 py-2 text-orange-400 text-sm font-medium mb-8">
+            <Bot className="w-4 h-4" />
+            Assistente de atendimento e vendas — 24h por dia, 7 dias por semana
           </div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-6">
-            Venda mais com{" "}
-            <span className="bg-gradient-to-r from-orange-400 to-red-500 bg-clip-text text-transparent">
-              automação inteligente
+          <h1 className="text-4xl md:text-6xl font-black leading-tight mb-6">
+            Pare de perder clientes<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
+              por não responder rápido
             </span>
-            <br />e sua conta GHL pronta na hora
           </h1>
 
-          <p className="text-white/60 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
-            Assine um plano, preencha os dados da sua empresa e sua sub-conta GoHighLevel é criada automaticamente. CRM, campanhas, IA e muito mais — tudo integrado.
+          <p className="text-xl md:text-2xl text-white/70 mb-4 max-w-2xl mx-auto leading-relaxed">
+            Nós configuramos um sistema simples que responde seus clientes automaticamente enquanto você trabalha.
+          </p>
+          <p className="text-lg text-white/50 mb-10 max-w-xl mx-auto">
+            Sem precisar mexer em tecnologia. Sem contratar mais funcionários. Sem perder oportunidades.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
-            <button
-              onClick={() => handlePlanCTA("starter")}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-orange-500/30"
-            >
-              Começar com Starter — US$ 118/mês
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => handlePlanCTA("business")}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all"
-            >
-              Ver plano Business
-              <ChevronRight className="w-5 h-5" />
-            </button>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+            <Link href="/criar-conta?plan=basic">
+              <Button size="lg" className="w-full sm:w-auto h-14 px-8 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-orange-500/30">
+                Quero meu sistema agora <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <a href="#como-funciona">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 border-white/20 text-white hover:bg-white/5 rounded-2xl text-lg">
+                <Play className="w-5 h-5 mr-2 text-orange-400" /> Ver como funciona
+              </Button>
+            </a>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-6 text-white/40 text-sm">
-            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-green-500" /> 14 dias grátis</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> Sem cobrança no trial</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-500" /> Cancele a qualquer momento</span>
-            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-green-500" /> Pagamento seguro via Stripe</span>
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-white/40">
+            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4 text-green-400" /> Sem contrato de fidelidade</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 text-green-400" /> Configuração incluída</span>
+            <span className="flex items-center gap-1.5"><Zap className="w-4 h-4 text-orange-400" /> Funcionando em até 48h</span>
+            <span className="flex items-center gap-1.5"><HeadphonesIcon className="w-4 h-4 text-blue-400" /> Suporte em português</span>
           </div>
         </div>
       </section>
 
-      {/* ── HOW IT WORKS ── */}
-      <section className="py-16 px-4 bg-white/[0.02] border-y border-white/10">
+      {/* ─── PROBLEMAS QUE RESOLVEMOS ────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white/[0.02]">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Como funciona em 5 passos</h2>
-            <p className="text-white/50">Da assinatura à sub-conta GHL ativa em menos de 5 minutos</p>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Reconhece algum desses problemas?</h2>
+            <p className="text-white/50 text-lg">Se sim, o GetSales4Now foi feito para você.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {STEPS.map((step, idx) => (
-              <div key={step.n} className="flex flex-col items-center text-center relative">
-                {idx < STEPS.length - 1 && (
-                  <div className="hidden md:block absolute top-5 left-[60%] w-full h-px bg-gradient-to-r from-orange-500/40 to-transparent" />
-                )}
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm mb-3 relative z-10 shadow-lg shadow-orange-500/30">
-                  {step.n}
+          <div className="grid md:grid-cols-2 gap-6">
+            {PROBLEMS.map((item, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-orange-500/30 transition-all">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p className="text-white/40 text-sm mb-2 line-through">{item.problem}</p>
+                    <p className="text-white font-semibold flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                      {item.solution}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-white text-sm font-semibold mb-1">{step.label}</p>
-                <p className="text-white/40 text-xs">{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── PLANS ── */}
+      {/* ─── COMO FUNCIONA ───────────────────────────────────────────────── */}
+      <section id="como-funciona" className="py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Simples assim — em 4 passos</h2>
+            <p className="text-white/50 text-lg">Você não precisa entender de tecnologia. Nós cuidamos de tudo.</p>
+          </div>
+          <div className="grid md:grid-cols-4 gap-6">
+            {HOW_IT_WORKS.map((step, i) => (
+              <div key={i} className="text-center relative">
+                {i < HOW_IT_WORKS.length - 1 && (
+                  <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] right-[-50%] h-px bg-gradient-to-r from-orange-500/40 to-transparent" />
+                )}
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-xl shadow-orange-500/20">
+                  {step.n}
+                </div>
+                <h3 className="font-bold text-white mb-2">{step.label}</h3>
+                <p className="text-white/50 text-sm">{step.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── BENEFÍCIOS VISUAIS ──────────────────────────────────────────── */}
+      <section className="py-20 px-4 bg-white/[0.02]">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">O que muda na sua empresa</h2>
+            <p className="text-white/50 text-lg">Resultados reais que nossos clientes já estão vivendo</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { icon: <Bot className="w-8 h-8" />, title: "Atendimento 24/7", desc: "Seu negócio responde clientes às 3h da manhã, no fim de semana, no feriado — sem você precisar estar online.", color: "orange" },
+              { icon: <MessageSquare className="w-8 h-8" />, title: "Zero mensagem perdida", desc: "WhatsApp, SMS, Instagram, Facebook — tudo em um único lugar. Nenhum cliente fica sem resposta.", color: "blue" },
+              { icon: <Repeat2 className="w-8 h-8" />, title: "Follow-up automático", desc: "O sistema lembra automaticamente dos clientes que não responderam. Você recupera vendas que perderia.", color: "green" },
+              { icon: <Calendar className="w-8 h-8" />, title: "Agenda cheia", desc: "Clientes agendam sozinhos, recebem lembretes e confirmam. Faltas caem até 80%.", color: "purple" },
+              { icon: <TrendingUp className="w-8 h-8" />, title: "Pipeline de vendas", desc: "Veja exatamente onde cada cliente está no processo de compra. Sem surpresas, sem perder negócios.", color: "yellow" },
+              { icon: <Users className="w-8 h-8" />, title: "Equipe alinhada", desc: "Toda a equipe no mesmo sistema. Cada um vê o que precisa. Sem duplicar contatos ou perder histórico.", color: "red" },
+            ].map((item, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-white/20 transition-all">
+                <div className={`w-14 h-14 rounded-xl mb-4 flex items-center justify-center ${
+                  item.color === "orange" ? "bg-orange-500/10 text-orange-400" :
+                  item.color === "blue" ? "bg-blue-500/10 text-blue-400" :
+                  item.color === "green" ? "bg-green-500/10 text-green-400" :
+                  item.color === "purple" ? "bg-purple-500/10 text-purple-400" :
+                  item.color === "yellow" ? "bg-yellow-500/10 text-yellow-400" :
+                  "bg-red-500/10 text-red-400"
+                }`}>
+                  {item.icon}
+                </div>
+                <h3 className="font-bold text-white text-lg mb-2">{item.title}</h3>
+                <p className="text-white/50 text-sm leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─── PLANOS ──────────────────────────────────────────────────────── */}
       <section id="planos" className="py-20 px-4">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Escolha seu plano</h2>
-            <p className="text-white/50">14 dias grátis em todos os planos. Sem cobrança hoje.</p>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Escolha o plano certo para você</h2>
+            <p className="text-white/50 text-lg">Sem contrato de fidelidade. Cancele quando quiser.</p>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 gap-8">
             {PLANS.map((plan) => (
-              <div
-                key={plan.id}
-                className={`relative rounded-2xl border-2 ${plan.border} bg-white/[0.03] p-8 flex flex-col shadow-2xl ${plan.glow}`}
-              >
-                {plan.badge && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold px-4 py-1 rounded-full shadow-lg">
-                      {plan.badge}
-                    </span>
+              <div key={plan.id} className={`relative rounded-3xl p-8 border transition-all ${
+                plan.highlight
+                  ? "bg-gradient-to-b from-orange-500/10 to-red-600/5 border-orange-500/40 shadow-2xl shadow-orange-500/10"
+                  : "bg-white/5 border-white/10 hover:border-white/20"
+              }`}>
+                {plan.highlight && (
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-orange-500 to-red-600 text-white text-xs font-bold px-4 py-1.5 rounded-full shadow-lg">
+                    MAIS COMPLETO
                   </div>
                 )}
-
                 <div className="mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-1">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className={`text-4xl font-black bg-gradient-to-r ${plan.color} bg-clip-text text-transparent`}>
-                      {plan.price}
-                    </span>
-                    <span className="text-white/40 text-sm">{plan.period}</span>
+                  <h3 className="text-2xl font-black text-white mb-2">{plan.name}</h3>
+                  <p className="text-white/60 text-sm mb-4">{plan.tagline}</p>
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-4xl font-black text-white">US$ {plan.price}</span>
+                    <span className="text-white/40">/mês</span>
                   </div>
+                  <p className="text-white/40 text-xs">+ US$ {plan.setupFee} taxa de configuração (única vez)</p>
                 </div>
-
-                <ul className="space-y-2.5 mb-8 flex-1">
-                  {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5 text-white/80 text-sm">
-                      <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0 mt-0.5" />
-                      {f}
+                <ul className="space-y-3 mb-8">
+                  {plan.benefits.map((b, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm text-white/80">
+                      <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+                      {b}
                     </li>
                   ))}
                 </ul>
-
-                <button
-                  onClick={() => handlePlanCTA(plan.id)}
-                  className={`w-full py-4 rounded-xl font-bold text-white text-base bg-gradient-to-r ${plan.color} hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg`}
-                >
-                  Começar trial grátis
-                  <ArrowRight className="w-4 h-4" />
-                </button>
+                <Link href={`/criar-conta?plan=${plan.id}`}>
+                  <Button className={`w-full h-12 font-bold rounded-xl ${
+                    plan.highlight
+                      ? "bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-xl shadow-orange-500/30"
+                      : "bg-white/10 hover:bg-white/20 text-white border border-white/20"
+                  }`}>
+                    {plan.cta} <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </Link>
               </div>
             ))}
           </div>
-
-          {/* Corp plan */}
-          <div className="mt-6 p-6 rounded-2xl border border-white/10 bg-white/[0.02] flex flex-col md:flex-row items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <Building2 className="w-5 h-5 text-white/60" />
-                <h3 className="text-lg font-bold text-white">Plano Corp</h3>
-                <span className="text-xs bg-white/10 text-white/60 px-2 py-0.5 rounded-full">Sob consulta</span>
-              </div>
-              <p className="text-white/50 text-sm">Para grandes empresas e redes. Múltiplas sub-contas, white-label, SLA dedicado e integrações customizadas.</p>
-            </div>
-            <a
-              href="mailto:contato@getsales4now.agency?subject=Plano Corp - Consulta"
-              className="shrink-0 inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-white/20 text-white/70 hover:text-white hover:border-white/40 transition-all text-sm font-semibold"
-            >
-              <Mail className="w-4 h-4" />
-              Falar com consultor
-            </a>
-          </div>
-
-          <div className="flex justify-center mt-6">
-            <Link href="/test-cards">
-              <span className="inline-flex items-center gap-2 text-xs text-white/30 hover:text-orange-400 transition-colors border border-white/10 hover:border-orange-500/30 rounded-full px-4 py-1.5 cursor-pointer">
-                💳 Ambiente de testes? Veja os cartões de teste do Stripe
-              </span>
-            </Link>
-          </div>
+          <p className="text-center text-white/30 text-sm mt-8">
+            Precisa de algo maior?{" "}
+            <a href="mailto:contato@getsales4now.agency" className="text-orange-400 hover:underline">
+              Fale com nossa equipe
+            </a>{" "}
+            sobre planos corporativos.
+          </p>
         </div>
       </section>
 
-      {/* ── FEATURES ── */}
-      <section className="py-16 px-4 bg-white/[0.02] border-y border-white/10">
+      {/* ─── DEPOIMENTOS ─────────────────────────────────────────────────── */}
+      <section id="depoimentos" className="py-20 px-4 bg-white/[0.02]">
         <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">Tudo que sua empresa precisa</h2>
-            <p className="text-white/50">Uma plataforma completa, integrada ao GoHighLevel</p>
+          <div className="text-center mb-14">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Quem já usa, não quer mais voltar atrás</h2>
+            <p className="text-white/50 text-lg">Resultados reais de clientes reais</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {FEATURES.map((f) => (
-              <div key={f.title} className="p-5 rounded-xl bg-white/[0.03] border border-white/10 hover:border-white/20 transition-colors">
-                <div className={`w-10 h-10 rounded-lg ${f.bg} flex items-center justify-center mb-3`}>
-                  <f.icon className={`w-5 h-5 ${f.color}`} />
+          <div className="grid md:grid-cols-3 gap-6">
+            {TESTIMONIALS.map((t, i) => (
+              <div key={i} className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                <div className="flex gap-0.5 mb-4">
+                  {Array.from({ length: t.stars }).map((_, s) => (
+                    <Star key={s} className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                  ))}
                 </div>
-                <h3 className="text-white font-semibold mb-1">{f.title}</h3>
-                <p className="text-white/50 text-sm leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TESTIMONIALS ── */}
-      <section className="py-16 px-4">
-        <div className="max-w-5xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl md:text-3xl font-bold text-white mb-3">O que nossos clientes dizem</h2>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {[
-              { name: "Maria González", role: "Salão de Beleza", country: "🇲🇽 México", text: "Passei de perder leads para triplicar meus agendamentos. O GetSales4Now é incrível!" },
-              { name: "Carlos Mendes", role: "Corretor de Imóveis", country: "🇧🇷 Brasil", text: "Finalmente um CRM que eu consigo usar! Minha sub-conta GHL foi criada em minutos." },
-              { name: "Sofia Reyes", role: "Corretora de Seguros", country: "🇨🇴 Colômbia", text: "As campanhas de WhatsApp me geram leads todos os dias no piloto automático." },
-            ].map((t) => (
-              <div key={t.name} className="p-6 rounded-xl bg-white/[0.03] border border-white/10 space-y-3">
-                <div className="flex gap-0.5">
-                  {[1,2,3,4,5].map((i) => <Star key={i} className="w-4 h-4 fill-amber-400 text-amber-400" />)}
-                </div>
-                <p className="text-white/60 text-sm leading-relaxed italic">"{t.text}"</p>
-                <div>
-                  <p className="text-white font-semibold text-sm">{t.name}</p>
-                  <p className="text-white/40 text-xs">{t.role} · {t.country}</p>
+                <p className="text-white/70 text-sm leading-relaxed mb-6">"{t.text}"</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-sm">
+                    {t.name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">{t.name}</p>
+                    <p className="text-white/40 text-xs">{t.role} · {t.country}</p>
+                  </div>
                 </div>
               </div>
             ))}
@@ -332,52 +363,57 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── FINAL CTA ── */}
-      <section className="py-20 px-4 bg-gradient-to-r from-orange-500/10 via-red-500/10 to-orange-500/10 border-y border-orange-500/20">
+      {/* ─── CTA FINAL ───────────────────────────────────────────────────── */}
+      <section className="py-24 px-4">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-full px-4 py-1.5 text-green-400 text-sm font-medium mb-6">
-            <Star className="w-4 h-4" />
-            14 dias grátis — sem cartão cobrado hoje
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-orange-500/30">
+            <Sparkles className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-3xl md:text-4xl font-black text-white mb-4">Pronto para começar?</h2>
-          <p className="text-white/60 text-lg mb-8">
-            Assine agora e sua sub-conta GoHighLevel estará ativa em minutos.
+          <h2 className="text-3xl md:text-5xl font-black mb-6 leading-tight">
+            Cada minuto sem responder<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-red-500">
+              é um cliente indo para o concorrente
+            </span>
+          </h2>
+          <p className="text-white/60 text-lg mb-10 max-w-xl mx-auto">
+            Comece hoje. Nossa equipe configura tudo para você. Em até 48h seu sistema está funcionando — respondendo, agendando e vendendo.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button
-              onClick={() => handlePlanCTA("starter")}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold text-lg transition-all hover:scale-105 shadow-lg shadow-orange-500/30"
-            >
-              Começar com Starter
-              <ArrowRight className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => handlePlanCTA("business")}
-              className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 text-white font-semibold text-lg transition-all"
-            >
-              Ver plano Business
-            </button>
+            <Link href="/criar-conta?plan=basic">
+              <Button size="lg" className="w-full sm:w-auto h-14 px-10 bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-orange-500/30">
+                Quero começar agora <ArrowRight className="w-5 h-5 ml-2" />
+              </Button>
+            </Link>
+            <Link href="/criar-conta?plan=business">
+              <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-10 border-white/20 text-white hover:bg-white/5 rounded-2xl text-lg">
+                Ver plano Business <ChevronRight className="w-5 h-5 ml-1" />
+              </Button>
+            </Link>
+          </div>
+          <div className="flex flex-wrap items-center justify-center gap-6 mt-10 text-sm text-white/30">
+            <span className="flex items-center gap-1.5"><Shield className="w-4 h-4" /> Sem fidelidade</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4" /> Configuração incluída</span>
+            <span className="flex items-center gap-1.5"><Phone className="w-4 h-4" /> Suporte em português</span>
+            <span className="flex items-center gap-1.5"><Building2 className="w-4 h-4" /> Para qualquer negócio</span>
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ── */}
-      <footer className="border-t border-white/10 py-8 px-4">
+      {/* ─── FOOTER ──────────────────────────────────────────────────────── */}
+      <footer className="border-t border-white/5 py-10 px-4">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={LOGO_URL} alt="GetSales4Now" className="w-7 h-7 rounded-lg object-cover" />
-            <span className="text-white/60 text-sm font-medium">GetSales4Now</span>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center text-white font-bold text-xs">GS</div>
+            <span className="text-white/60 text-sm">GetSales4Now — Assistente de vendas 24/7</span>
           </div>
-          <div className="flex items-center gap-6 text-white/40 text-xs">
-            <a href="mailto:contato@getsales4now.agency" className="hover:text-white/70 transition-colors flex items-center gap-1">
-              <Mail className="w-3.5 h-3.5" /> contato@getsales4now.agency
-            </a>
-            <Link href="/login" className="hover:text-white/70 transition-colors">Entrar</Link>
-            <Link href="/test-cards" className="hover:text-white/70 transition-colors">Cartões de Teste</Link>
+          <div className="flex gap-6 text-sm text-white/30">
+            <Link href="/termos"><span className="hover:text-white/60 cursor-pointer transition-colors">Termos de Uso</span></Link>
+            <Link href="/privacidade"><span className="hover:text-white/60 cursor-pointer transition-colors">Privacidade</span></Link>
+            <Link href="/login"><span className="hover:text-white/60 cursor-pointer transition-colors">Entrar</span></Link>
           </div>
-          <p className="text-white/30 text-xs">© 2026 GetSales4Now. Todos os direitos reservados.</p>
         </div>
       </footer>
+
     </div>
   );
 }

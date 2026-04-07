@@ -22,7 +22,7 @@ const PLAN_ICONS: Record<string, React.ReactNode> = {
   agency: <Crown className="w-5 h-5 text-yellow-500" />,
 };
 
-const GHL_STATUS_CONFIG = {
+const GS4N_STATUS_CONFIG = {
   pending: { color: "bg-gray-500/20 text-gray-400 border-gray-500/30", icon: <Clock className="w-4 h-4" />, label: "Aguardando" },
   provisioning: { color: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30", icon: <RefreshCw className="w-4 h-4 animate-spin" />, label: "Provisionando..." },
   active: { color: "bg-green-500/20 text-green-400 border-green-500/30", icon: <CheckCircle2 className="w-4 h-4" />, label: "Ativo" },
@@ -48,9 +48,9 @@ export default function Billing() {
     onError: (err) => toast.error(err.message),
   });
 
-  const triggerProvisioning = trpc.ghlProvisioning.triggerProvisioning.useMutation({
+  const triggerProvisioning = trpc.gs4nProvisioning.triggerProvisioning.useMutation({
     onSuccess: (data) => {
-      toast.success(`Sub-conta GHL criada: ${data.locationName}`);
+      toast.success(`Sub-conta GS4N criada: ${data.locationName}`);
       setShowGhlForm(false);
       refetchSub();
       refetchProvisioning();
@@ -63,7 +63,7 @@ export default function Billing() {
       toast.error("Preencha o nome e e-mail da empresa.");
       return;
     }
-    // O token GHL é a GHL_API_KEY da agência — não é fornecido pelo cliente
+    // O token GS4N é a API_KEY da agência — não é fornecido pelo cliente
     triggerProvisioning.mutate({
       businessName,
       businessEmail,
@@ -71,8 +71,8 @@ export default function Billing() {
   };
 
   const planName = subscription?.plan ?? "free";
-  const ghlStatus = subscription?.ghlStatus ?? "pending";
-  const ghlStatusConfig = GHL_STATUS_CONFIG[ghlStatus];
+  const gs4nStatus = subscription?.ghlStatus ?? "pending";
+  const gs4nStatusConfig = GS4N_STATUS_CONFIG[gs4nStatus as keyof typeof GS4N_STATUS_CONFIG];
   const isPaidPlan = planName !== "free";
 
   return (
@@ -85,7 +85,7 @@ export default function Billing() {
               <CreditCard className="w-6 h-6 text-orange-500" />
               Assinatura & Cobrança
             </h1>
-            <p className="text-gray-400 text-sm mt-1">Gerencie seu plano e a integração com GoHighLevel</p>
+            <p className="text-gray-400 text-sm mt-1">Gerencie seu plano e a integração com GS4N</p>
           </div>
           <Link href="/pricing">
             <Button className="bg-orange-600 hover:bg-orange-700 text-white">
@@ -144,7 +144,7 @@ export default function Billing() {
               {[
                 { icon: <Users className="w-4 h-4" />, label: "Contatos", value: subscription?.contactsLimit === -1 ? "Ilimitado" : subscription?.contactsLimit ?? 100 },
                 { icon: <Users className="w-4 h-4" />, label: "Usuários", value: subscription?.usersLimit === -1 ? "Ilimitado" : subscription?.usersLimit ?? 1 },
-                { icon: <Globe className="w-4 h-4" />, label: "Sub-conta GHL", value: isPaidPlan ? "Incluída" : "Não incluída" },
+                { icon: <Globe className="w-4 h-4" />, label: "Sub-conta GS4N", value: isPaidPlan ? "Incluída" : "Não incluída" },
                 { icon: <Bot className="w-4 h-4" />, label: "IA", value: isPaidPlan ? "Ativada" : "Básica" },
               ].map((item, i) => (
                 <div key={i} className="bg-gray-800/50 rounded-lg p-3 text-center">
@@ -161,7 +161,7 @@ export default function Billing() {
               <div className="bg-orange-950/30 border border-orange-800/30 rounded-lg p-4 flex items-center justify-between">
                 <div>
                   <p className="text-orange-300 font-medium text-sm">Faça upgrade para desbloquear mais recursos</p>
-                  <p className="text-gray-400 text-xs mt-1">Sub-conta GHL, IA avançada, mais contatos e campanhas</p>
+                  <p className="text-gray-400 text-xs mt-1">Sub-conta GS4N, IA avançada, mais contatos e campanhas</p>
                 </div>
                 <Link href="/pricing">
                   <Button size="sm" className="bg-orange-600 hover:bg-orange-700 text-white">
@@ -173,21 +173,21 @@ export default function Billing() {
           </CardContent>
         </Card>
 
-        {/* GHL Sub-Account */}
+        {/* GS4N Sub-Account */}
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
               <Globe className="w-5 h-5 text-blue-400" />
-              Sub-conta GoHighLevel
+              Sub-conta GS4N
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <div className="flex items-center gap-2">
-                  <Badge className={`${ghlStatusConfig.color} flex items-center gap-1`}>
-                    {ghlStatusConfig.icon}
-                    {ghlStatusConfig.label}
+                  <Badge className={`${gs4nStatusConfig.color} flex items-center gap-1`}>
+                    {gs4nStatusConfig.icon}
+                    {gs4nStatusConfig.label}
                   </Badge>
                   {subscription?.ghlLocationName && (
                     <span className="text-gray-300 text-sm font-medium">{subscription.ghlLocationName}</span>
@@ -203,14 +203,14 @@ export default function Billing() {
                 )}
               </div>
 
-              {isPaidPlan && ghlStatus !== "active" && (
+              {isPaidPlan && gs4nStatus !== "active" && (
                 <Button
                   size="sm"
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={() => setShowGhlForm(!showGhlForm)}
                 >
                   <Settings className="w-4 h-4 mr-2" />
-                  {ghlStatus === "failed" ? "Tentar Novamente" : "Configurar GHL"}
+                  {gs4nStatus === "failed" ? "Tentar Novamente" : "Configurar GS4N"}
                 </Button>
               )}
             </div>
@@ -218,7 +218,7 @@ export default function Billing() {
             {!isPaidPlan && (
               <div className="bg-gray-800/50 rounded-lg p-4 text-center">
                 <Globe className="w-8 h-8 text-gray-600 mx-auto mb-2" />
-                <p className="text-gray-400 text-sm">A sub-conta GoHighLevel está disponível nos planos Pro, Business e Agency.</p>
+                <p className="text-gray-400 text-sm">A sub-conta GS4N está disponível nos planos Pro, Business e Agency.</p>
                 <Link href="/pricing">
                   <Button size="sm" variant="outline" className="mt-3 border-orange-600 text-orange-400 hover:bg-orange-950/50">
                     Ver Planos Pagos
@@ -232,10 +232,10 @@ export default function Billing() {
               <div className="border border-blue-800/30 rounded-xl p-5 bg-blue-950/20 space-y-4">
                 <h3 className="text-white font-semibold text-sm flex items-center gap-2">
                   <Settings className="w-4 h-4 text-blue-400" />
-                  Configurar Sub-conta GoHighLevel
+                  Configurar Sub-conta GS4N
                 </h3>
                 <p className="text-gray-400 text-xs leading-relaxed">
-                  Informe o nome e e-mail do seu negócio. Criaremos automaticamente uma sub-conta no GoHighLevel com todas as configurações necessárias.
+                  Informe o nome e e-mail do seu negócio. Criaremos automaticamente uma sub-conta no GS4N com todas as configurações necessárias.
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -269,7 +269,7 @@ export default function Billing() {
                     {triggerProvisioning.isPending ? (
                       <><RefreshCw className="w-4 h-4 mr-2 animate-spin" /> Criando sub-conta...</>
                     ) : (
-                      <><CheckCircle2 className="w-4 h-4 mr-2" /> Criar Sub-conta GHL</>
+                      <><CheckCircle2 className="w-4 h-4 mr-2" /> Criar Sub-conta GS4N</>
                     )}
                   </Button>
                   <Button

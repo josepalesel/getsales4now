@@ -50,7 +50,7 @@ export const authOwnRouter = router({
         email: z.string().email("Invalid email address"),
         password: z.string().min(8, "Password must be at least 8 characters"),
         confirmPassword: z.string(),
-        plan: z.enum(["starter", "business"]),
+        plan: z.enum(["basic", "business"]),
       }).refine((d) => d.password === d.confirmPassword, {
         message: "Passwords do not match",
         path: ["confirmPassword"],
@@ -95,7 +95,7 @@ export const authOwnRouter = router({
       if (!newUser) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Failed to create user" });
 
       // Create subscription record (trial state, awaiting Stripe)
-      const planLimits = { starter: { contacts: 5000, users: 3 }, business: { contacts: -1, users: 10 } };
+      const planLimits = { basic: { contacts: 5000, users: 3 }, business: { contacts: -1, users: 10 } };
       const limits = planLimits[input.plan];
       await db.insert(subscriptions).values({
         userId: newUser.id,
@@ -269,7 +269,7 @@ export const authOwnRouter = router({
   }),
 
   /**
-   * Complete GHL sub-account onboarding step.
+   * Complete GS4N sub-account onboarding step.
    */
   updateGhlOnboarding: protectedProcedure
     .input(z.object({

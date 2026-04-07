@@ -1,7 +1,7 @@
 /**
  * /criar-conta — Formulário de criação de conta GetSales4Now
  * Fluxo: Dados pessoais → Dados da empresa → Escolha do plano → Checkout Stripe → Wizard Onboarding
- * NOTA: O token GHL é interno da agência (GHL_API_KEY no servidor). O cliente NÃO precisa fornecer token.
+ * NOTA: O token GS4N é interno da agência (API_KEY no servidor). O cliente NÃO precisa fornecer token.
  */
 import { useState } from "react";
 import { useLocation, useSearch } from "wouter";
@@ -42,7 +42,7 @@ const schema = z.object({
   state: z.string().optional(),
   city: z.string().optional(),
   // Step 3 — Plano
-  plan: z.enum(["starter", "business"]),
+  plan: z.enum(["basic", "business"]),
 }).refine((d) => d.password === d.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"],
@@ -81,7 +81,7 @@ const COUNTRIES = [
 
 const PLANS = [
   {
-    id: "starter" as const,
+    id: "basic" as const,
     name: "Starter",
     price: "$118",
     period: "/mês",
@@ -120,7 +120,7 @@ function StepDot({ num, active, done }: { num: number; active: boolean; done: bo
 export default function CriarConta() {
   const [, navigate] = useLocation();
   const search = useSearch();
-  const planFromUrl = new URLSearchParams(search).get("plan") as "starter" | "business" | null;
+  const planFromUrl = new URLSearchParams(search).get("plan") as "basic" | "business" | null;
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -140,7 +140,7 @@ export default function CriarConta() {
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      plan: (planFromUrl === "business" ? "business" : "starter") as "starter" | "business",
+      plan: (planFromUrl === "business" ? "business" : "basic") as "basic" | "business",
       country: "BR",
     },
   });
@@ -227,12 +227,12 @@ export default function CriarConta() {
             </span>
           </h2>
           <p className="text-white/50 text-base mb-10">
-            Preencha o formulário e sua conta no GoHighLevel será criada automaticamente em minutos.
+            Preencha o formulário e sua conta no GS4N será criada automaticamente em minutos.
           </p>
 
           <div className="space-y-4">
             {[
-              { icon: CheckCircle2, text: "Conta GHL criada automaticamente" },
+              { icon: CheckCircle2, text: "Conta GS4N criada automaticamente" },
               { icon: Shield, text: "14 dias de trial gratuito" },
               { icon: Zap, text: "CRM + Automações prontos para usar" },
               { icon: Headphones, text: "Suporte em português" },
@@ -559,11 +559,11 @@ export default function CriarConta() {
                     <h3 className="text-white font-semibold text-sm">Resumo do pedido</h3>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/50">Plano</span>
-                      <span className="text-white font-medium capitalize">{selectedPlan === "starter" ? "Starter" : "Business"}</span>
+                      <span className="text-white font-medium capitalize">{selectedPlan === "basic" ? "Basic" : "Business"}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/50">Valor mensal</span>
-                      <span className="text-white font-medium">{selectedPlan === "starter" ? "$118" : "$398"}/mês</span>
+                      <span className="text-white font-medium">{selectedPlan === "basic" ? "US$ 397" : "US$ 748"}/mês</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/50">Trial gratuito</span>

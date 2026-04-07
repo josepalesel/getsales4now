@@ -1,5 +1,5 @@
 /**
- * GoHighLevel Webhook Handler for GetSales4Now
+ * GS4N Webhook Handler for GetSales4Now
  * Receives real-time events from GHL and syncs data to the local database.
  *
  * GHL sends webhooks for: ContactCreate, ContactUpdate, ContactDelete,

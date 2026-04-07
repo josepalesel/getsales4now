@@ -2,7 +2,7 @@
  * GetSales4Now — Formulário de Criação de Sub-Conta
  *
  * Tela pós-pagamento: formulário único onde o cliente preenche
- * os dados da empresa e a sub-conta GHL é criada automaticamente
+ * os dados da empresa e a sub-conta GS4N é criada automaticamente
  * dentro da plataforma SaaS app.getsales4now.com
  *
  * Correções aplicadas:
@@ -29,7 +29,7 @@ import {
   ExternalLink, CreditCard, AlertTriangle,
 } from "lucide-react";
 
-// ─── URL do painel SaaS GHL ───────────────────────────────────────────────────
+/// ─── URL do painel SaaS GS4N ──────────────────────────────────────────
 const GHL_SAAS_URL = "https://app.getsales4now.com";
 
 // ─── Confetti ─────────────────────────────────────────────────────────────────
@@ -306,11 +306,11 @@ export default function GhlOnboarding() {
   const [checkingSubscription, setCheckingSubscription] = useState(false);
   const [paymentRequired, setPaymentRequired] = useState(false);
   const [selectedPlan] = useState<string>(
-    new URLSearchParams(search).get("plan") ?? "starter"
+    new URLSearchParams(search).get("plan") ?? "basic"
   );
 
   // Verificar status da assinatura (polling para aguardar webhook Stripe)
-  const subscriptionStatus = trpc.ghlProvisioning.getStatus.useQuery(undefined, {
+  const subscriptionStatus = trpc.gs4nProvisioning.getStatus.useQuery(undefined, {
     enabled: !!user,
     refetchInterval: isSuccess ? false : 5000, // Polling a cada 5s
   });
@@ -321,7 +321,7 @@ export default function GhlOnboarding() {
   const handleGoToCheckout = async () => {
     try {
       const result = await checkoutMutation.mutateAsync({
-        plan: (selectedPlan === "business" ? "business" : "starter") as "starter" | "business",
+        plan: (selectedPlan === "business" ? "business" : "basic") as "basic" | "business",
         billing: "monthly",
       });
       if (result.url) {
@@ -350,7 +350,7 @@ export default function GhlOnboarding() {
   const selectedCountry = watch("country");
 
   const updateMutation = trpc.authOwn.updateGhlOnboarding.useMutation();
-  const provisionMutation = trpc.ghlProvisioning.triggerProvisioning.useMutation({
+  const provisionMutation = trpc.gs4nProvisioning.triggerProvisioning.useMutation({
     onSuccess: (data) => {
       setIsCreating(false);
       setLocationId(data.locationId);
@@ -395,7 +395,7 @@ export default function GhlOnboarding() {
       // Continua mesmo se falhar o update de perfil
     }
 
-    // Criar sub-conta GHL usando a chave da agência
+    // Criar sub-conta GS4N usando a chave da agência
     provisionMutation.mutate({
       businessName: data.companyName,
       businessEmail: data.companyEmail,

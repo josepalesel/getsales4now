@@ -1,5 +1,5 @@
 /**
- * GoHighLevel API v2 Service
+ * GS4N API v2 Service
  * Uses the GHL_API_KEY from environment (Agency-level Private Integration)
  * Handles sub-account provisioning, contacts, pipelines, conversations sync
  *
@@ -171,9 +171,9 @@ export async function getGhlLocation(locationId: string, token?: string): Promis
 }
 
 /**
- * Creates a new sub-account (Location) in GoHighLevel for a new GetSales4Now customer
+ * Creates a new sub-account (Location) in GS4N for a new GetSales4Now customer
  *
- * FIX #2: Endpoint changed from "/locations/" to "/locations" (no trailing slash).
+ * NOTE: Endpoint uses "/locations" (no trailing slash).
  * GHL API v2 returns 301/404 with trailing slash on POST requests.
  */
 export async function createGhlLocation(input: CreateLocationInput): Promise<GhlLocation> {
@@ -441,11 +441,11 @@ export async function getGhlAgencyInfo(token?: string): Promise<{ companyId: str
   return { companyId: company.id, name: company.name };
 }
 
-// ─── Plan Limits ───────────────────────────────────────────────────────────────
-// Plans: free (sem plano), starter ($118/mês), business ($398/mês), corp (sob consulta)
+// ─── Plan Limits ────────────────────────────────────────────────────────────────
+// Plans: free (sem plano), basic ($397/mês), business ($748/mês), corp (sob consulta)
 export const PLAN_LIMITS = {
   free:     { contacts: 100,  users: 1,  campaigns: 2,  socialPosts: 10, funnels: 1,  aiCredits: 50,   ghlSubAccount: false },
-  starter:  { contacts: 5000, users: 3,  campaigns: 15, socialPosts: 60, funnels: 5,  aiCredits: 300,  ghlSubAccount: true },
+  basic:    { contacts: 5000, users: 3,  campaigns: 15, socialPosts: 60, funnels: 5,  aiCredits: 300,  ghlSubAccount: true },
   business: { contacts: -1,   users: 10, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: 2000, ghlSubAccount: true },
   corp:     { contacts: -1,   users: -1, campaigns: -1, socialPosts: -1, funnels: -1, aiCredits: -1,   ghlSubAccount: true },
 } as const;
@@ -453,8 +453,8 @@ export const PLAN_LIMITS = {
 export type PlanType = keyof typeof PLAN_LIMITS;
 
 export const STRIPE_PRICE_IDS = {
-  starter_monthly:  process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
-  starter_yearly:   process.env.STRIPE_PRICE_STARTER_YEARLY ?? "",
+  basic_monthly:    process.env.STRIPE_PRICE_STARTER_MONTHLY ?? "",
+  basic_yearly:     process.env.STRIPE_PRICE_STARTER_YEARLY ?? "",
   business_monthly: process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? "",
   business_yearly:  process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? "",
   // Corp is contact-us only — no Stripe price IDs

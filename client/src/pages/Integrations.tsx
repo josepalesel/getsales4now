@@ -47,7 +47,7 @@ const INTEGRATIONS_CATALOG: {
 }[] = [
   {
     id: "ghl",
-    name: "GoHighLevel",
+    name: "GS4N",
     description: "Primary CRM & automation engine. Sync contacts, pipelines and campaigns.",
     icon: Zap,
     color: "from-orange-400 to-orange-600",
@@ -216,7 +216,7 @@ function ConnectDialog({ integration, onSuccess }: { integration: typeof INTEGRA
   );
 }
 
-// ─── GHL Sync Panel ───────────────────────────────────────────────────────────
+// ─── GS4N Sync Panel ───────────────────────────────────────────────────────────
 function GhlSyncPanel() {
   const { data: status } = trpc.ghlSync.getConnectionStatus.useQuery();
   const { data: stats, refetch: refetchStats } = trpc.ghlSync.getSyncStats.useQuery();
@@ -266,7 +266,7 @@ function GhlSyncPanel() {
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white">
               <Zap className="w-4 h-4" />
             </div>
-            GoHighLevel Sync
+            GS4N Sync
             <Badge className="bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 border-0 text-[10px]">
               <CheckCircle2 className="w-3 h-3 mr-1" />
               Connected
@@ -368,7 +368,7 @@ export default function Integrations() {
           </p>
         </div>
 
-        {/* GHL Sync Panel */}
+        {/* GS4N Sync Panel */}
         <GhlSyncPanel />
 
         {/* Connected integrations */}

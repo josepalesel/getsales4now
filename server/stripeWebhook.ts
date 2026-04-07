@@ -1,15 +1,6 @@
 /**
  * Stripe Webhook Handler for GetSales4Now
- * Handles subscription events and triggers GHL sub-account provisioning
- *
- * FIXES APPLIED:
- *  1. Removed the "evt_test_" bypass that silently dropped real test-mode events.
- *     Stripe test-mode events also start with "evt_" but NOT with "evt_test_".
- *     The old guard was incorrectly blocking all test events from being processed.
- *  2. Added early guard: if STRIPE_WEBHOOK_SECRET is not configured, log a clear
- *     error instead of silently failing signature verification.
- *  3. The checkout.session.completed handler now stores the actual Stripe price ID
- *     in stripePriceId (was reading from metadata.price_id which was never set).
+ * Handles subscription events and triggers GS4N sub-account provisioning
  */
 import type { Express, Request, Response } from "express";
 import express from "express";
@@ -25,13 +16,13 @@ const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET ?? "";
 
 function getPlanFromPriceId(priceId: string): PlanType {
   const priceMap: Record<string, PlanType> = {
-    [process.env.STRIPE_PRICE_STARTER_MONTHLY ?? ""]:  "starter",
-    [process.env.STRIPE_PRICE_STARTER_YEARLY ?? ""]:   "starter",
+    [process.env.STRIPE_PRICE_STARTER_MONTHLY ?? ""]:  "basic",
+    [process.env.STRIPE_PRICE_STARTER_YEARLY ?? ""]:   "basic",
     [process.env.STRIPE_PRICE_BUSINESS_MONTHLY ?? ""]: "business",
     [process.env.STRIPE_PRICE_BUSINESS_YEARLY ?? ""]:  "business",
     // Corp is contact-us only — no Stripe price IDs
   };
-  return priceMap[priceId] ?? "starter";
+  return priceMap[priceId] ?? "basic";
 }
 
 export function registerStripeWebhook(app: Express) {
@@ -81,7 +72,7 @@ export function registerStripeWebhook(app: Express) {
           case "checkout.session.completed": {
             const session = event.data.object as Stripe.Checkout.Session;
             const userId = parseInt(session.metadata?.user_id ?? "0");
-            const plan = (session.metadata?.plan ?? "starter") as PlanType;
+            const plan = (session.metadata?.plan ?? "basic") as PlanType;
             const stripeCustomerId = session.customer as string;
             const stripeSubscriptionId = session.subscription as string;
 
@@ -116,7 +107,7 @@ export function registerStripeWebhook(app: Express) {
                 stripePriceId,
                 contactsLimit: limits.contacts,
                 usersLimit: limits.users,
-                ghlStatus: "pending", // Ready for GHL provisioning
+                ghlStatus: "pending", // Ready for GS4N provisioning
                 updatedAt: new Date(),
               }).where(eq(subscriptions.userId, userId));
             } else {
@@ -137,7 +128,7 @@ export function registerStripeWebhook(app: Express) {
             const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
             await notifyOwner({
               title: `Nova assinatura: ${plan.toUpperCase()}`,
-              content: `${user?.name ?? "Usuário"} (${user?.email ?? ""}) assinou o plano ${plan}. Sub-conta GHL aguardando configuração.`,
+              content: `${user?.name ?? "Usuário"} (${user?.email ?? ""}) assinou o plano ${plan}. Sub-conta GS4N aguardando configuração.`,
             });
 
             console.log(`[Stripe Webhook] Subscription created for user ${userId} - plan: ${plan}`);
