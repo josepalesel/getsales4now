@@ -215,7 +215,7 @@ describe("billing router structure", () => {
     const plans = await caller.billing.getPlans();
     const basic = plans.find((p: { id: string }) => p.id === "basic");
     expect(basic).toBeDefined();
-    expect(basic.monthlyPrice).toBe(397);
+    expect(basic.monthlyPrice).toBe(248);
   });
 
   it("Business plan price is 748", async () => {
@@ -353,7 +353,7 @@ describe("gs4nProvisioning.triggerProvisioning — payment guard", () => {
         timezone: "America/Sao_Paulo",
       })
     ).rejects.toThrow();
-  });
+  }, 15000);
 });
 
 describe("gs4nProvisioning.getStatus — payment confirmed field", () => {

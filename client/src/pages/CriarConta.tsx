@@ -82,27 +82,27 @@ const COUNTRIES = [
 const PLANS = [
   {
     id: "basic" as const,
-    name: "Starter",
-    price: "$118",
+    name: "Basic",
+    price: "US$ 248",
     period: "/mês",
-    description: "Ideal para pequenas empresas e agências iniciantes",
-    features: ["Até 5.000 contatos", "3 usuários", "CRM completo", "Automações básicas", "Suporte por e-mail"],
-    color: "from-blue-500 to-cyan-600",
-    border: "border-blue-500/40",
-    bg: "bg-blue-500/10",
+    description: "Pare de perder clientes e responda na hora — sem precisar mexer em tecnologia",
+    features: ["Respostas automáticas 24h", "WhatsApp e SMS em um só lugar", "Follow-up automático", "Agenda automática", "Publicação nas mídias sociais"],
+    color: "from-orange-500 to-orange-600",
+    border: "border-orange-500/40",
+    bg: "bg-orange-500/10",
     badge: null,
   },
   {
     id: "business" as const,
     name: "Business",
-    price: "$398",
+    price: "US$ 748",
     period: "/mês",
-    description: "Para empresas em crescimento que precisam de mais poder",
-    features: ["Contatos ilimitados", "10 usuários", "CRM + Automações avançadas", "WhatsApp + Multi-canal", "Suporte prioritário"],
-    color: "from-orange-500 to-red-600",
-    border: "border-orange-500/40",
-    bg: "bg-orange-500/10",
-    badge: "Mais Popular",
+    description: "Organize, automatize e escale seus clientes — sem perder oportunidades",
+    features: ["Tudo do Basic", "Até 5 números de WhatsApp", "Pipeline de vendas completo", "Chamadas de vídeo", "Múltiplos usuários"],
+    color: "from-red-500 to-red-600",
+    border: "border-red-500/40",
+    bg: "bg-red-500/10",
+    badge: "Mais completo",
   },
 ];
 
@@ -563,7 +563,7 @@ export default function CriarConta() {
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/50">Valor mensal</span>
-                      <span className="text-white font-medium">{selectedPlan === "basic" ? "US$ 397" : "US$ 748"}/mês</span>
+                      <span className="text-white font-medium">{selectedPlan === "basic" ? "US$ 248" : "US$ 748"}/mês</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-white/50">Trial gratuito</span>

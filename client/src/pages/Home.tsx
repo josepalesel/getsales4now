@@ -17,8 +17,8 @@ const PLANS = [
     id: "basic",
     name: "Basic",
     tagline: "Pare de perder clientes e responda na hora",
-    setupFee: 248,
-    price: 397,
+    setupFee: 347,
+    price: 248,
     highlight: false,
     cta: "Começar com Basic",
     benefits: [

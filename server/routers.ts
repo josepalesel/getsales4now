@@ -1005,10 +1005,10 @@ const billingRouter = router({
         id: "basic",
         name: "Basic",
         description: "Pare de perder clientes e responda na hora — sem precisar mexer em tecnologia.",
-        price: { monthly: 397, yearly: Math.round(397 * 12 * 0.8) },
-        monthlyPrice: 397,
-        yearlyPrice: Math.round(397 * 12 * 0.8),
-        setupFee: 248,
+        price: { monthly: 248, yearly: Math.round(248 * 12 * 0.8) },
+        monthlyPrice: 248,
+        yearlyPrice: Math.round(248 * 12 * 0.8),
+        setupFee: 347,
         currency: "USD",
         limits: PLAN_LIMITS.basic,
         features: [
@@ -1100,7 +1100,7 @@ const billingRouter = router({
       const origin = (ctx.req.headers.origin as string) || process.env.APP_URL || "https://getsales4now.agency";
       // Real prices in cents
       const planPrices: Record<string, Record<string, number>> = {
-        basic:    { monthly: 39700, yearly: Math.round(397 * 12 * 0.8 * 100) },
+        basic:    { monthly: 24800, yearly: Math.round(248 * 12 * 0.8 * 100) },
         business: { monthly: 74800, yearly: Math.round(748 * 12 * 0.8 * 100) },
       };
 
