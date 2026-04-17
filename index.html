@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GetSales4Now — Sessão Estratégica Gratuita</title>
+  <meta name="description" content="Pare de perder clientes por não responder rápido. Agende uma sessão gratuita e descubra como automatizar seu atendimento em português.">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="GetSales4Now — Sessão Estratégica Gratuita">
+  <meta property="og:description" content="Sistema de atendimento automático para empresários brasileiros na Flórida. Configuração em 48h.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://getsales4now.com/agendar">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='16' fill='%23FF5722'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='16' font-family='Arial' font-weight='bold'>GS</text></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- META PIXEL (cole seu pixel aqui) -->
+  <!--
+  <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', 'SEU_PIXEL_ID_AQUI');
+    fbq('track', 'PageView');
+  </script>
+  -->
+
+  <!-- GOOGLE ADS TAG (cole sua tag aqui) -->
+  <!--
+  <script async src="https://www.googletagmanager.com/gtag/js?id=AW-SEU_ID"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'AW-SEU_ID');
+  </script>
+  -->
+
+  <style>
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a25;
+      --text-primary: #ffffff;
+      --text-secondary: #9ca3af;
+      --accent: #ff5722;
+      --accent-hover: #ff7043;
+      --accent-glow: rgba(255, 87, 34, 0.3);
+      --green: #22c55e;
+      --border: rgba(255, 255, 255, 0.08);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 40px 20px;
+      position: relative;
+      background: radial-gradient(ellipse at 50% 0%, rgba(255, 87, 34, 0.08) 0%, transparent 60%);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: white;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 87, 34, 0.1);
+      border: 1px solid rgba(255, 87, 34, 0.3);
+      border-radius: 100px;
+      padding: 8px 20px;
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 32px;
+      font-weight: 500;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 5.5vw, 56px);
+      font-weight: 800;
+      line-height: 1.15;
+      max-width: 700px;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 .highlight {
+      color: var(--accent);
+      display: block;
+    }
+
+    .hero .subtitle {
+      font-size: clamp(16px, 2.2vw, 20px);
+      color: var(--text-secondary);
+      max-width: 560px;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+
+    .hero .subtitle-small {
+      font-size: 15px;
+      color: var(--text-secondary);
+      opacity: 0.7;
+      margin-bottom: 36px;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: white;
+      font-size: 18px;
+      font-weight: 700;
+      padding: 18px 40px;
+      border-radius: 12px;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 24px var(--accent-glow);
+    }
+
+    .cta-button:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px var(--accent-glow);
+    }
+
+    .cta-button svg {
+      width: 20px;
+      height: 20px;
+      transition: transform 0.3s;
+    }
+
+    .cta-button:hover svg {
+      transform: translateX(4px);
+    }
+
+    .trust-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .trust-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--green);
+      flex-shrink: 0;
+    }
+
+    /* ===== PROBLEMAS ===== */
+    .section {
+      padding: 80px 20px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 48px;
+    }
+
+    .problems-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .problem-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .problem-card .problem {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .problem-card .solution {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .problem-card .solution svg {
+      width: 18px;
+      height: 18px;
+      color: var(--green);
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ===== COMO FUNCIONA ===== */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 24px;
+      margin-top: 48px;
+    }
+
+    .step {
+      text-align: center;
+    }
+
+    .step-number {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), #ff9800);
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 20px;
+      margin-bottom: 16px;
+    }
+
+    .step h3 {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    /* ===== BOOKING SECTION ===== */
+    .booking-section {
+      padding: 80px 20px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .booking-wrapper {
+      max-width: 700px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .booking-wrapper h2 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .booking-wrapper h2 .highlight {
+      color: var(--accent);
+    }
+
+    .booking-wrapper .booking-sub {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 32px;
+    }
+
+    .calendar-embed {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px;
+      min-height: 500px;
+      overflow: hidden;
+    }
+
+    .calendar-embed iframe {
+      width: 100%;
+      min-height: 500px;
+      border: none;
+      border-radius: 12px;
+    }
+
+    /* ===== URGENCY CLOSE ===== */
+    .close-section {
+      padding: 80px 20px;
+      text-align: center;
+      background: radial-gradient(ellipse at 50% 100%, rgba(255, 87, 34, 0.06) 0%, transparent 60%);
+    }
+
+    .close-section h2 {
+      font-size: clamp(24px, 4vw, 36px);
+      font-weight: 800;
+      max-width: 600px;
+      margin: 0 auto 12px;
+      line-height: 1.2;
+    }
+
+    .close-section h2 .highlight {
+      color: var(--accent);
+    }
+
+    .close-section p {
+      color: var(--text-secondary);
+      font-size: 16px;
+      max-width: 500px;
+      margin: 0 auto 32px;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      padding: 24px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    footer .footer-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    footer .footer-brand .logo-icon-sm {
+      width: 28px;
+      height: 28px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 11px;
+      color: white;
+    }
+
+    footer .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    footer .footer-links a {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    footer .footer-links a:hover {
+      color: var(--text-primary);
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 640px) {
+      .hero {
+        padding: 32px 16px;
+        min-height: auto;
+        padding-top: 60px;
+        padding-bottom: 60px;
+      }
+
+      .trust-row {
+        gap: 12px;
+      }
+
+      .trust-item {
+        font-size: 12px;
+      }
+
+      .cta-button {
+        width: 100%;
+        justify-content: center;
+        font-size: 16px;
+        padding: 16px 32px;
+      }
+
+      .section {
+        padding: 60px 16px;
+      }
+
+      .booking-section {
+        padding: 60px 16px;
+      }
+
+      .close-section {
+        padding: 60px 16px;
+      }
+
+      .steps {
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+
+      footer {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @media (prefers-reduced-motion: no-preference) {
+      .fade-in {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+      }
+
+      .fade-in.visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero">
+    <div class="logo">
+      <div class="logo-icon">GS</div>
+      <span class="logo-text">GetSales4Now</span>
+    </div>
+
+    <div class="badge">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+      Sessão estratégica gratuita — vagas limitadas
+    </div>
+
+    <h1>
+      Pare de perder clientes
+      <span class="highlight">por não responder rápido</span>
+    </h1>
+
+    <p class="subtitle">
+      Nós configuramos um sistema que responde seus clientes automaticamente enquanto você trabalha. Em português, feito para o seu negócio.
+    </p>
+    <p class="subtitle-small">
+      Sem precisar mexer em tecnologia. Sem contratar mais funcionários.
+    </p>
+
+    <a href="#agendar" class="cta-button">
+      Agendar Sessão Gratuita
+      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <div class="trust-row">
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Sem contrato de fidelidade
+      </span>
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Configuração incluída
+      </span>
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Funcionando em até 48h
+      </span>
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Suporte em português
+      </span>
+    </div>
+  </section>
+
+  <!-- ===== PROBLEMAS ===== -->
+  <section class="section fade-in">
+    <h2 class="section-title">Reconhece algum desses problemas?</h2>
+    <p class="section-subtitle">Se sim, o GetSales4Now foi feito para você.</p>
+
+    <div class="problems-grid">
+      <div class="problem-card">
+        <p class="problem">Cliente manda mensagem e você demora para responder</p>
+        <div class="solution">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Resposta automática imediata — 24h por dia, 7 dias por semana</span>
+        </div>
+      </div>
+      <div class="problem-card">
+        <p class="problem">Mensagens espalhadas em WhatsApp, Instagram, e-mail...</p>
+        <div class="solution">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Tudo centralizado em um único lugar — sem perder nada</span>
+        </div>
+      </div>
+      <div class="problem-card">
+        <p class="problem">Clientes somem e você esquece de fazer o follow-up</p>
+        <div class="solution">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Follow-up automático que traz o cliente de volta sem esforço</span>
+        </div>
+      </div>
+      <div class="problem-card">
+        <p class="problem">Agenda bagunçada e clientes faltando em compromissos</p>
+        <div class="solution">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Agendamento automático com lembretes que reduzem faltas em 80%</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COMO FUNCIONA ===== -->
+  <section class="section fade-in">
+    <h2 class="section-title">Simples assim — em 3 passos</h2>
+    <p class="section-subtitle">Você não precisa entender de tecnologia. Nós cuidamos de tudo.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Agende sua sessão</h3>
+        <p>Escolha o melhor horário abaixo. É gratuito e sem compromisso.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Nós analisamos seu negócio</h3>
+        <p>Na sessão, entendemos sua operação e mostramos como o sistema funciona na prática.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Seu sistema entra no ar</h3>
+        <p>Em até 48h tudo está configurado, respondendo clientes e agendando para você.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BOOKING ===== -->
+  <section class="booking-section" id="agendar">
+    <div class="booking-wrapper fade-in">
+      <h2>
+        Agende sua sessão
+        <span class="highlight">gratuita</span>
+      </h2>
+      <p class="booking-sub">Escolha o melhor dia e horário. Duração: ~30 minutos.</p>
+
+      <div class="calendar-embed">
+        <iframe
+          src="https://api.getsales4now.com/widget/booking/hguJuteW5mlmieFeVsrr"
+          scrolling="no"
+          id="hguJuteW5mlmieFeVsrr_booking"
+        ></iframe>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CLOSE ===== -->
+  <section class="close-section fade-in">
+    <h2>
+      Cada minuto sem responder é um cliente
+      <span class="highlight">indo para o concorrente</span>
+    </h2>
+    <p>Comece hoje. Nossa equipe configura tudo para você. Em até 48h seu sistema está funcionando.</p>
+
+    <a href="#agendar" class="cta-button">
+      Quero agendar agora
+      <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+
+    <div class="trust-row" style="margin-top: 24px;">
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Sem fidelidade
+      </span>
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Configuração incluída
+      </span>
+      <span class="trust-item">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+        Suporte em português
+      </span>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <div class="footer-brand">
+      <div class="logo-icon-sm">GS</div>
+      GetSales4Now — Assistente de vendas 24/7
+    </div>
+    <div class="footer-links">
+      <a href="https://getsales4now.agency" target="_blank">Termos de Uso</a>
+      <a href="https://getsales4now.agency" target="_blank">Privacidade</a>
+    </div>
+  </footer>
+
+  <!-- GHL Calendar Script -->
+  <script src="https://api.getsales4now.com/js/form_embed.js" type="text/javascript"></script>
+
+  <!-- Scroll Animations -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var observer = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(function(el) {
+        observer.observe(el);
+      });
+    });
+  </script>
+
+  <!-- UTM Tracking — preserva UTMs do anúncio na URL do calendar -->
+  <script>
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var utmSource = params.get('utm_source') || '';
+      var utmCampaign = params.get('utm_campaign') || '';
+      var utmMedium = params.get('utm_medium') || '';
+
+      if (utmSource || utmCampaign) {
+        var iframe = document.getElementById('hguJuteW5mlmieFeVsrr_booking');
+        if (iframe) {
+          var iframeSrc = iframe.src;
+          var separator = iframeSrc.indexOf('?') > -1 ? '&' : '?';
+          var utmString = '';
+          if (utmSource) utmString += 'utm_source=' + encodeURIComponent(utmSource);
+          if (utmCampaign) utmString += (utmString ? '&' : '') + 'utm_campaign=' + encodeURIComponent(utmCampaign);
+          if (utmMedium) utmString += (utmString ? '&' : '') + 'utm_medium=' + encodeURIComponent(utmMedium);
+          iframe.src = iframeSrc + separator + utmString;
+        }
+      }
+    })();
+  </script>
+
+</body>
+</html>
